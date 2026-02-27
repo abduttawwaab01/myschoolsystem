@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Dashboard - My School</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./assets/css/style.css">
+    
+    <script src="./assets/js/firebase-config.js"></script>
+    <script src="./assets/js/storage.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/core.js"></script>
+    <script src="./assets/js/theme.js"></script>
+    <script src="./assets/js/chat.js"></script>
+    <script src="./assets/js/calendar.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Auth === 'undefined' || !Auth.isAuthenticated()) {
+                window.location.href = 'parent-login.html';
+                return;
+            }
+            
+            const user = Auth.getCurrentUser();
+            if (user.role !== 'parent') {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            ParentDashboard.init();
+            
+            setTimeout(() => {
+                Chat.init();
+                Calendar.init();
+            }, 500);
+        });
+    </script>
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <aside class="sidebar" id="mainSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Parent Portal</span>
+                </div>
+                <button class="sidebar-close" onclick="toggleSidebar()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <a href="#" class="nav-item active" data-page="dashboard" onclick="event.preventDefault(); ParentDashboard.showSection('dashboard')">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">My Child</div>
+                    <a href="#" class="nav-item" data-page="report" onclick="event.preventDefault(); ParentDashboard.showSection('report')">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Report Card</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="testResults" onclick="event.preventDefault(); ParentDashboard.showSection('testResults')">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Test Results</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="attendance" onclick="event.preventDefault(); ParentDashboard.showSection('attendance')">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Attendance</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="scores" onclick="event.preventDefault(); ParentDashboard.showSection('scores')">
+                        <i class="fas fa-star"></i>
+                        <span>Daily/Weekly Scores</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Communication</div>
+                    <a href="#" class="nav-item" data-page="announcements" onclick="event.preventDefault(); ParentDashboard.showSection('announcements')">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Announcements</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="chat" onclick="event.preventDefault(); ParentDashboard.showSection('chat')">
+                        <i class="fas fa-comments"></i>
+                        <span>Chat</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="contact" onclick="event.preventDefault(); ParentDashboard.showSection('contact')">
+                        <i class="fas fa-envelope"></i>
+                        <span>Contact School</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Public Pages</div>
+                    <a href="./public/blog.html" target="_blank" class="nav-item">
+                        <i class="fas fa-blog"></i>
+                        <span>Blog</span>
+                    </a>
+                    <a href="./public/resources.html" target="_blank" class="nav-item">
+                        <i class="fas fa-folder-open"></i>
+                        <span>Resources</span>
+                    </a>
+                    <a href="./public/pricing.html" target="_blank" class="nav-item">
+                        <i class="fas fa-tags"></i>
+                        <span>Pricing</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Support</div>
+                    <a href="#" class="nav-item" data-page="help" onclick="event.preventDefault(); ParentDashboard.showSection('help')">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Help & Guide</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="currentUserAvatar">PT</div>
+                    <div class="user-details">
+                        <div class="user-name" id="currentUserName">Parent</div>
+                        <div class="user-role">Parent</div>
+                    </div>
+                </div>
+                <button class="btn logout-btn" onclick="ParentDashboard.logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <nav class="top-navbar">
+                <div class="navbar-left">
+                    <button class="menu-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="school-info" id="schoolInfo">
+                        <i class="fas fa-school"></i>
+                        <span id="schoolName">Select School</span>
+                    </div>
+                </div>
+                <div class="navbar-right">
+                    <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="navbar-profile" onclick="ParentDashboard.showProfile()">
+                        <div class="avatar" id="navAvatar">PT</div>
+                        <span class="name" id="navUserName">Parent</span>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Announcement Banner -->
+            <div id="announcementBanner" class="announcement-banner">
+                <div class="announcement-content">
+                    <i class="fas fa-bullhorn"></i>
+                    <span id="announcementContent"></span>
+                </div>
+                <button class="announcement-close" onclick="document.getElementById('announcementBanner').classList.remove('active')">&times;</button>
+            </div>
+
+            <div class="page-content">
+                <!-- Dashboard Section -->
+                <div id="dashboardSection">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Welcome, <span id="welcomeName">Parent</span></h1>
+                            <p class="page-subtitle">View your child's progress and reports</p>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-child"></i> Select Child</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <select id="childSelect" class="form-control" onchange="ParentDashboard.selectChild()">
+                                    <option value="">Select your child</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="childOverview" style="display: none;">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon primary">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Class</div>
+                                    <div class="stat-value" id="childClass">-</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon success">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Attendance</div>
+                                    <div class="stat-value" id="childAttendance">-</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon info">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Average Score</div>
+                                    <div class="stat-value" id="childAverage">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid-3 mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fas fa-calendar"></i> Calendar</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div id="calendarWidget" class="calendar-widget"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid-2 mt-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Quick Actions</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="flex gap-2" style="flex-wrap: wrap;">
+                                        <button class="btn btn-primary" onclick="ParentDashboard.showSection('report')">
+                                            <i class="fas fa-file-alt"></i> View Report Card
+                                        </button>
+                                        <button class="btn btn-outline" onclick="ParentDashboard.showSection('attendance')">
+                                            <i class="fas fa-calendar"></i> View Attendance
+                                        </button>
+                                        <button class="btn btn-outline" onclick="ParentDashboard.showSection('contact')">
+                                            <i class="fas fa-envelope"></i> Contact School
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Recent Performance</h3>
+                                </div>
+                                <div class="card-body" id="recentPerformance">
+                                    <p class="text-muted">Select a term to view performance</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Card Section -->
+                <div id="reportSection" style="display: none;">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Report Card</h1>
+                            <p class="page-subtitle">View your child's academic performance</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn btn-outline" onclick="ParentDashboard.exportReportPDF()">
+                                <i class="fas fa-file-pdf"></i> Export PDF
+                            </button>
+                            <button class="btn btn-outline" onclick="ParentDashboard.exportReportCSV()">
+                                <i class="fas fa-file-csv"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="filters-bar">
+                                <div class="filter-group">
+                                    <label>Term:</label>
+                                    <select id="reportTermSelect" class="form-control" onchange="ParentDashboard.loadReportCard()">
+                                        <option value="First Term">First Term</option>
+                                        <option value="Second Term">Second Term</option>
+                                        <option value="Third Term">Third Term</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Year:</label>
+                                    <select id="reportYearSelect" class="form-control" onchange="ParentDashboard.loadReportCard()">
+                                        <option value="2024">2024</option>
+                                        <option value="2025">2025</option>
+                                        <option value="2026" selected>2026</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body" id="reportCardContent">
+                            <p class="text-muted">Select a child to view report card</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendance Section -->
+                <div id="attendanceSection" style="display: none;">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Attendance Records</h1>
+                            <p class="page-subtitle">View your child's attendance history</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn btn-outline" onclick="ParentDashboard.exportAttendanceCSV()">
+                                <i class="fas fa-download"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body" id="attendanceContent">
+                            <p class="text-muted">Select a child to view attendance</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scores Section (Daily/Weekly) -->
+                <div id="scoresSection" style="display: none;">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Daily/Weekly Scores</h1>
+                            <p class="page-subtitle">View your child's continuous assessment scores</p>
+                        </div>
+                    </div>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="filters-bar">
+                                <div class="filter-group">
+                                    <label>Child:</label>
+                                    <select id="scoresChildSelect" class="form-control" onchange="ParentDashboard.loadScores()">
+                                        <option value="">Select Child</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Term:</label>
+                                    <select id="scoresTermSelect" class="form-control" onchange="ParentDashboard.loadScores()">
+                                        <option value="First Term">First Term</option>
+                                        <option value="Second Term">Second Term</option>
+                                        <option value="Third Term">Third Term</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Year:</label>
+                                    <select id="scoresYearSelect" class="form-control" onchange="ParentDashboard.loadScores()">
+                                        <option value="2024">2024</option>
+                                        <option value="2025">2025</option>
+                                        <option value="2026" selected>2026</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body" id="scoresContent">
+                            <p class="text-muted">Select a child to view scores</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Results Section -->
+                <div id="testResultsSection" style="display: none;">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Test Results</h1>
+                            <p class="page-subtitle">View your child's test and exam results</p>
+                        </div>
+                    </div>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="filters-bar">
+                                <div class="filter-group">
+                                    <label>Child:</label>
+                                    <select id="testResultsChildSelect" class="form-control" onchange="ParentDashboard.loadTestResults()">
+                                        <option value="">Select Child</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Test Type:</label>
+                                    <select id="testResultsTypeFilter" class="form-control" onchange="ParentDashboard.loadTestResults()">
+                                        <option value="">All Tests</option>
+                                        <option value="exam">Exams</option>
+                                        <option value="midterm">Mid-term</option>
+                                        <option value="quiz">Quizzes</option>
+                                        <option value="assignment">Assignments</option>
+                                        <option value="daily">Daily Tests</option>
+                                        <option value="weekly">Weekly Tests</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stats-grid mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon primary"><i class="fas fa-star"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-label">Average Score</div>
+                                <div class="stat-value" id="testAvgScore">-</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon success"><i class="fas fa-trophy"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-label">Best Score</div>
+                                <div class="stat-value" id="testBestScore">-</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon info"><i class="fas fa-clipboard-check"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-label">Tests Taken</div>
+                                <div class="stat-value" id="testCount">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body" id="testResultsContent">
+                            <p class="text-muted">Select a child to view test results</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Section -->
+                <div id="contactSection" style="display: none;">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Contact School</h1>
+                            <p class="page-subtitle">Send messages to your child's teacher or school administration</p>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-user-tie"></i> Contact Class Teacher</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label>Subject</label>
+                                    <input type="text" id="teacherSubject" class="form-control" placeholder="Enter subject">
+                                </div>
+                                <div class="form-group">
+                                    <label>Message</label>
+                                    <textarea id="teacherMessage" class="form-control" rows="4" placeholder="Write your message..."></textarea>
+                                </div>
+                                <button class="btn btn-primary" onclick="ParentDashboard.sendTeacherMessage()">
+                                    <i class="fas fa-paper-plane"></i> Send Message
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title"><i class="fas fa-building"></i> Contact Principal/Director</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label>Subject</label>
+                                    <input type="text" id="principalSubject" class="form-control" placeholder="Enter subject">
+                                </div>
+                                <div class="form-group">
+                                    <label>Message</label>
+                                    <textarea id="principalMessage" class="form-control" rows="4" placeholder="Write your message..."></textarea>
+                                </div>
+                                <button class="btn btn-primary" onclick="ParentDashboard.sendPrincipalMessage()">
+                                    <i class="fas fa-paper-plane"></i> Send Message
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Section -->
+                <div id="chatSection" style="display: none;">
+                    <div class="page-header">
+                        <div><h1 class="page-title">Chat</h1></div>
+                    </div>
+                    <div class="chat-container" id="chatContainer">
+                        <div class="chat-sidebar" id="chatSidebar">
+                            <button class="chat-sidebar-close" id="chatSidebarClose" onclick="Chat.closeSidebar()" style="display: none;">&times;</button>
+                            <div class="chat-search">
+                                <input type="text" id="chatSearch" placeholder="Search...">
+                            </div>
+                            <button class="btn btn-outline mt-2" id="newChatBtn" style="width:100%" onclick="Chat.showNewChatModal()">New Chat</button>
+                            <div class="chat-list" id="chatList"></div>
+                            <div id="groupsList"></div>
+                        </div>
+                        <div class="chat-main" id="chatMain">
+                            <div class="chat-header" id="chatHeader">
+                                <button class="chat-back-btn" id="chatBackBtn" onclick="Chat.showSidebar()" style="display: none;"><i class="fas fa-arrow-left"></i></button>
+                                <div class="chat-header-info"><h3>Select a conversation</h3></div>
+                            </div>
+                            <div class="chat-messages" id="chatMessages"></div>
+                            <div class="chat-input-area">
+                                <button class="btn btn-icon" onclick="Chat.showEmojiPicker()" title="Emoji">
+                                    <i class="fas fa-smile"></i>
+                                </button>
+                                <input type="text" id="chatInput" placeholder="Type a message...">
+                                <div class="chat-input-actions">
+                                    <button id="fileBtn" title="Attach File"><i class="fas fa-paperclip"></i></button>
+                                    <button id="voiceBtn" title="Voice Message"><i class="fas fa-microphone"></i></button>
+                                    <button id="sendBtn" class="send-btn" title="Send"><i class="fas fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- New Chat Modal -->
+                <div id="newChatModal" class="modal-overlay" style="display:none;">
+                    <div class="modal">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Start New Chat</h3>
+                            <button class="modal-close" onclick="Modal.hide('newChatModal')">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="text" id="newChatSearch" class="form-control" placeholder="Search users..." oninput="Chat.filterNewChatUsers(this.value)">
+                            <div id="newChatUserList" style="max-height: 300px; overflow-y: auto; margin-top: 10px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Announcements Section -->
+                <div id="announcementsSection" style="display: none;">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">School Announcements</h1>
+                            <p class="page-subtitle">Important messages from the school</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="parentAnnouncementsList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help Section -->
+                <div id="helpSection" style="display: none;">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Help & Guide</h1>
+                            <p class="page-subtitle">Learn how to use the parent portal</p>
+                        </div>
+                    </div>
+                    <div id="helpGuideContainer"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-graduation-cap"></i>
+                <span>My School System</span>
+            </div>
+            <div class="footer-links">
+                <a href="./public/blog.html" target="_blank"><i class="fas fa-blog"></i> Blog</a>
+                <a href="./public/resources.html" target="_blank"><i class="fas fa-folder-open"></i> Resources</a>
+                <a href="./public/pricing.html" target="_blank"><i class="fas fa-tags"></i> Pricing</a>
+                <a href="./public/privacy.html" target="_blank"><i class="fas fa-shield-alt"></i> Privacy</a>
+                <a href="./public/terms.html" target="_blank"><i class="fas fa-file-contract"></i> Terms</a>
+            </div>
+            <div class="footer-info">
+                <p>&copy; 2026 My School System. All rights reserved.</p>
+                <p>My School System - Odebunmi Tawwab</p>
+            </div>
+            <div class="footer-social">
+                <a href="https://facebook.com" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://twitter.com" target="_blank" title="Twitter"><i class="fab fa-twitter"></i></a>
+                <a href="https://instagram.com" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://linkedin.com" target="_blank" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+    </footer>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+        const ParentDashboard = {
+            currentChild: null,
+            schoolId: null,
+            
+            init() {
+                const user = Auth.getCurrentUser();
+                this.schoolId = user.schoolId;
+                
+                document.getElementById('currentUserName').textContent = user.name;
+                document.getElementById('navUserName').textContent = user.name;
+                document.getElementById('welcomeName').textContent = user.name;
+                
+                const initials = Utils.getInitials(user.name);
+                document.getElementById('currentUserAvatar').textContent = initials;
+                document.getElementById('navAvatar').textContent = initials;
+                
+                const school = Auth.getSchool();
+                if (school) {
+                    document.getElementById('schoolName').textContent = school.name;
+                }
+                
+                displayAnnouncementBanner();
+                this.loadChildren();
+                this.loadHelpGuide();
+            },
+            
+            loadChildren() {
+                const user = Auth.getCurrentUser();
+                const students = Storage.getStudents(this.schoolId);
+                
+                const children = students.filter(s => s.parentPhone === user.phone || s.parentEmail === user.email);
+                const select = document.getElementById('childSelect');
+                
+                if (children.length === 0) {
+                    select.innerHTML = '<option value="">No children found</option>';
+                    Toast.warning('No children linked to your account');
+                    return;
+                }
+                
+                select.innerHTML = '<option value="">Select your child</option>' + 
+                    children.map(c => `<option value="${c.id}">${c.name} - ${c.class}</option>`).join('');
+                
+                if (children.length === 1) {
+                    select.value = children[0].id;
+                    this.selectChild();
+                }
+            },
+            
+            selectChild() {
+                const childId = document.getElementById('childSelect').value;
+                if (!childId) {
+                    document.getElementById('childOverview').style.display = 'none';
+                    this.currentChild = null;
+                    return;
+                }
+                
+                const student = Storage.getItemById('students', childId);
+                this.currentChild = student;
+                
+                document.getElementById('childOverview').style.display = 'block';
+                document.getElementById('childClass').textContent = student.class;
+                
+                const attendance = Storage.getAttendance(this.schoolId);
+                const studentAttendance = attendance.filter(a => a.studentId === childId);
+                const present = studentAttendance.filter(a => a.status === 'present').length;
+                const percent = studentAttendance.length > 0 ? Math.round((present / studentAttendance.length) * 100) : 0;
+                document.getElementById('childAttendance').textContent = percent + '%';
+                
+                const scores = Storage.getScores(this.schoolId, childId);
+                const avg = scores.length > 0 ? (scores.reduce((sum, s) => sum + (s.score || 0), 0) / scores.length).toFixed(1) : 0;
+                document.getElementById('childAverage').textContent = avg;
+                
+                this.loadRecentPerformance();
+            },
+            
+            loadRecentPerformance() {
+                const container = document.getElementById('recentPerformance');
+                if (!this.currentChild) {
+                    container.innerHTML = '<p class="text-muted">Select a child to view performance</p>';
+                    return;
+                }
+                
+                const scores = Storage.getScores(this.schoolId, this.currentChild.id);
+                const recentScores = scores.slice(-5);
+                
+                if (recentScores.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No recent scores</p>';
+                    return;
+                }
+                
+                let html = '<div class="list-group">';
+                recentScores.forEach(score => {
+                    html += `
+                        <div class="list-group-item">
+                            <div>
+                                <div style="font-weight: 600;">${score.subject}</div>
+                                <div style="font-size: 12px; color: var(--gray);">${score.term} ${score.year}</div>
+                            </div>
+                            <span class="badge badge-primary">${score.score}</span>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            },
+            
+            showSection(section) {
+                document.querySelectorAll('#dashboardSection, #reportSection, #attendanceSection, #scoresSection, #contactSection, #announcementsSection, #helpSection, #chatSection, #testResultsSection').forEach(el => {
+                    if (el) el.style.display = 'none';
+                });
+                
+                const targetEl = document.getElementById(section + 'Section');
+                if (targetEl) targetEl.style.display = 'block';
+                
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.page === section) item.classList.add('active');
+                });
+                
+                if (section === 'report') this.loadReportCard();
+                if (section === 'attendance') this.loadAttendance();
+                if (section === 'scores') this.initScoresSection();
+                if (section === 'announcements') this.loadAnnouncements();
+                if (section === 'chat') {
+                    if (typeof Chat !== 'undefined') Chat.init();
+                }
+                if (section === 'testResults') this.initTestResultsSection();
+            },
+            
+            loadReportCard() {
+                const container = document.getElementById('reportCardContent');
+                if (!this.currentChild) {
+                    container.innerHTML = '<p class="text-muted">Select a child to view report card</p>';
+                    return;
+                }
+                
+                const term = document.getElementById('reportTermSelect').value;
+                const year = document.getElementById('reportYearSelect').value;
+                const scores = Storage.getScores(this.schoolId, this.currentChild.id);
+                const termScores = scores.filter(s => s.term === term && s.year === parseInt(year));
+                
+                const reports = Storage.getData('studentReports') || [];
+                const studentReport = reports.find(r => 
+                    r.studentId === this.currentChild.id && 
+                    r.term === term && 
+                    r.year === parseInt(year)
+                );
+                
+                const attendance = Storage.getAttendance(this.schoolId, this.currentChild.id);
+                const termAttendance = attendance.filter(a => a.term === term && a.year === parseInt(year));
+                let presentDays = 0, totalDays = 0;
+                termAttendance.forEach(a => {
+                    if (a.status === 'present') presentDays++;
+                    totalDays++;
+                });
+                const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
+                
+                const school = Auth.getSchool();
+                const schoolColor = school?.idCardColor || '#16a34a';
+                const schoolLogo = school?.logoUrl || '';
+                const lightColor = schoolColor + '15';
+                const borderColor = schoolColor + '40';
+                const isThirdTerm = term.includes('Third');
+                
+                if (isThirdTerm) {
+                    // Third Term - Show cumulative scores from all terms
+                    const firstTermScores = scores.filter(s => s.term.includes('First') && s.year === parseInt(year));
+                    const secondTermScores = scores.filter(s => s.term.includes('Second') && s.year === parseInt(year));
+                    const thirdTermScores = scores.filter(s => s.term.includes('Third') && s.year === parseInt(year));
+                    
+                    const subjectScores = {};
+                    const allScores = [...firstTermScores, ...secondTermScores, ...thirdTermScores];
+                    allScores.forEach(s => {
+                        if (!subjectScores[s.subject]) subjectScores[s.subject] = { first: 0, second: 0, third: 0 };
+                        if (s.term.includes('First')) subjectScores[s.subject].first = s.score;
+                        if (s.term.includes('Second')) subjectScores[s.subject].second = s.score;
+                        if (s.term.includes('Third')) subjectScores[s.subject].third = s.score;
+                    });
+                    
+                    const subjects = Object.keys(subjectScores);
+                    const maxScore = subjects.length * 300; // 100 max per term
+                    
+                    let html = `
+                        <div class="report-card" style="max-width:900px;margin:0 auto;padding:25px;border:3px solid ${schoolColor};background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+                            <div class="report-header" style="text-align:center;border-bottom:3px solid ${schoolColor};padding-bottom:20px;margin-bottom:25px;">
+                                ${schoolLogo ? `<img src="${schoolLogo}" alt="Logo" style="width:80px;height:80px;border-radius:50%;margin-bottom:10px;object-fit:contain;border:2px solid ${schoolColor};">` : ''}
+                                <h2 style="margin:0;font-size:28px;color:${schoolColor};font-weight:700;">${school?.name || 'School'}</h2>
+                                <p style="margin:8px 0 0;font-size:13px;color:#64748b;">${school?.address || ''} | ${school?.phone || ''} | ${school?.email || ''}</p>
+                                <p style="margin:15px 0 0;font-size:18px;font-weight:600;background:${schoolColor};color:#fff;padding:8px 20px;border-radius:20px;display:inline-block;">${isThirdTerm ? 'Cumulative Report Card - ' + year + ' (All Terms)' : term + ' Term Report Card - ' + year}</p>
+                            </div>
+                            <div class="report-student-info" style="display:flex;flex-wrap:wrap;gap:20px;margin-bottom:25px;">
+                                <div style="flex:1;min-width:200px;background:${lightColor};padding:15px;border-radius:10px;border-left:4px solid ${schoolColor};">
+                                    <p style="margin:6px 0;"><strong>Student Name:</strong> ${this.currentChild.name}</p>
+                                    <p style="margin:6px 0;"><strong>Class:</strong> ${this.currentChild.class}</p>
+                                </div>
+                            </div>
+                            <table class="table" style="width:100%;border-collapse:collapse;border:2px solid ${schoolColor};margin-bottom:25px;border-radius:8px;overflow:hidden;">
+                                <thead>
+                                    <tr style="background:${schoolColor};color:#fff;">
+                                        <th style="border:1px solid ${borderColor};padding:12px;text-align:left;">Subject</th>
+                                        <th style="border:1px solid ${borderColor};padding:12px;text-align:center;">1st Term</th>
+                                        <th style="border:1px solid ${borderColor};padding:12px;text-align:center;">2nd Term</th>
+                                        <th style="border:1px solid ${borderColor};padding:12px;text-align:center;">3rd Term</th>
+                                        <th style="border:1px solid ${borderColor};padding:12px;text-align:center;">Total</th>
+                                        <th style="border:1px solid ${borderColor};padding:12px;text-align:center;">Average</th>
+                                        <th style="border:1px solid ${borderColor};padding:12px;text-align:center;">Grade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    if (subjects.length === 0) {
+                        html += '<tr><td colspan="7" class="text-center">No scores recorded</td></tr>';
+                    } else {
+                        let grandTotal = 0;
+                        subjects.forEach((subject, idx) => {
+                            const first = subjectScores[subject].first;
+                            const second = subjectScores[subject].second;
+                            const third = subjectScores[subject].third;
+                            const total = first + second + third;
+                            const avg = total / 3;
+                            const grade = this.getGrade(avg);
+                            grandTotal += total;
+                            const rowBg = idx % 2 === 0 ? '#fff' : '#f8fafc';
+                            
+                            html += `
+                                <tr style="background:${rowBg};">
+                                    <td style="border:1px solid ${borderColor};padding:10px;"><strong>${subject}</strong></td>
+                                    <td style="border:1px solid ${borderColor};padding:10px;text-align:center;">${first}</td>
+                                    <td style="border:1px solid ${borderColor};padding:10px;text-align:center;">${second}</td>
+                                    <td style="border:1px solid ${borderColor};padding:10px;text-align:center;">${third}</td>
+                                    <td style="border:1px solid ${borderColor};padding:10px;text-align:center;font-weight:700;color:${schoolColor};">${total}</td>
+                                    <td style="border:1px solid ${borderColor};padding:10px;text-align:center;">${avg.toFixed(1)}</td>
+                                    <td style="border:1px solid ${borderColor};padding:10px;text-align:center;"><span class="badge badge-${grade.letter >= 'C' ? 'success' : 'warning'}" style="padding:4px 10px;border-radius:12px;font-weight:600;">${grade.letter}</span></td>
+                                </tr>
+                            `;
+                        });
+                        
+                        const overallTotal = grandTotal;
+                        const overallAvg = grandTotal / subjects.length;
+                        const percentage = (grandTotal / maxScore * 100).toFixed(1);
+                        const overallGrade = this.getGrade(overallAvg);
+                        
+                        html += `
+                                <tr style="background:${schoolColor};color:#fff;font-weight:bold;">
+                                    <td colspan="3" style="border:1px solid ${borderColor};padding:12px;">OVERALL TOTAL</td>
+                                    <td style="border:1px solid ${borderColor};padding:12px;text-align:center;">${overallTotal}</td>
+                                    <td style="border:1px solid ${borderColor};padding:12px;text-align:center;">${overallAvg.toFixed(1)}</td>
+                                    <td style="border:1px solid ${borderColor};padding:12px;text-align:center;">${percentage}%</td>
+                                    <td style="border:1px solid ${borderColor};padding:12px;text-align:center;"><span class="badge" style="background:#fff;color:${schoolColor};padding:4px 10px;border-radius:12px;font-weight:700;">${overallGrade.letter}</span></td>
+                                </tr>
+                        `;
+                    }
+                    
+                    html += '</tbody></table>';
+                    
+                    html += `
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 25px;">
+                            <div style="flex: 1; min-width: 200px; padding: 15px; border: 2px solid ${schoolColor}; border-radius: 10px; background: ${lightColor};">
+                                <h4 style="margin: 0 0 12px; border-bottom: 2px solid ${schoolColor}; padding-bottom: 8px; color: ${schoolColor}; font-weight: 600;"><i class="fas fa-calendar-check"></i> Attendance</h4>
+                                <table style="width: 100%;">
+                                    <tr><td style="padding: 6px; color: #64748b;">Present:</td><td style="padding: 6px; font-weight: 700; color: ${schoolColor}; font-size: 16px;">${presentDays} days</td></tr>
+                                    <tr><td style="padding: 6px; color: #64748b;">Total:</td><td style="padding: 6px; font-weight: 600;">${totalDays} days</td></tr>
+                                    <tr><td style="padding: 6px; color: #64748b;">Percentage:</td><td style="padding: 6px; font-weight: 700; color: ${schoolColor}; font-size: 18px;">${attendancePercentage}%</td></tr>
+                                </table>
+                            </div>
+                    `;
+                    
+                    if (studentReport) {
+                        html += `
+                            <div style="flex: 1; min-width: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                                <h4 style="margin: 0 0 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Teacher's Comments</h4>
+                                <p style="margin: 5px 0;"><strong>Academic:</strong> ${studentReport.academic || 'N/A'}</p>
+                                <p style="margin: 5px 0;"><strong>Behavior:</strong> ${studentReport.behavior || 'N/A'}</p>
+                                <p style="margin: 5px 0;"><strong>Recommendation:</strong> ${studentReport.recommendation || 'N/A'}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                    
+                    html += `
+                        <div style="display: flex; justify-content: space-between; margin-top: 30px; padding-top: 25px; border-top: 3px solid ${schoolColor};">
+                            <div style="text-align: center; flex: 1;">
+                                <p style="margin-bottom: 40px; font-weight: 600; color: ${schoolColor};">Teacher's Signature:</p>
+                                <div style="width: 150px; height: 50px; border-bottom: 3px solid ${schoolColor}; margin: 0 auto; border-radius: 2px;"></div>
+                            </div>
+                            <div style="text-align: center; flex: 1;">
+                                <p style="margin-bottom: 40px; font-weight: 600; color: ${schoolColor};">Principal's/Director's Signature:</p>
+                                <div style="width: 150px; height: 50px; border-bottom: 3px solid ${schoolColor}; margin: 0 auto; border-radius: 2px;"></div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    html += `
+                        <div class="report-footer" style="margin-top: 25px; padding-top: 15px; border-top: 1px solid ${borderColor}; text-align: center;">
+                            <p style="margin: 8px 0; font-size: 11px; color: #64748b;"><strong>Grade Key:</strong> A (90-100): Excellent | B (80-89): Very Good | C (70-79): Good | D (60-69): Fair | E (50-59): Pass | F (0-49): Fail</p>
+                            <p style="margin: 8px 0; font-size: 10px; color: #94a3b8;"><i class="fas fa-school"></i> My School System - Odebunmi Tawwab</p>
+                        </div>
+                    `;
+                    container.innerHTML = html;
+                } else {
+                    // First or Second Term - Show Score (stored as single score)
+                    const subjectScores = {};
+                    termScores.forEach(s => {
+                        if (!subjectScores[s.subject]) subjectScores[s.subject] = 0;
+                        subjectScores[s.subject] = s.score;
+                    });
+                    
+                    const subjects = Object.keys(subjectScores);
+                    
+                    let html = `
+                        <div class="report-card" style="max-width:900px;margin:0 auto;padding:25px;border:3px solid ${schoolColor};background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+                            <div class="report-header" style="text-align:center;border-bottom:3px solid ${schoolColor};padding-bottom:20px;margin-bottom:25px;">
+                                ${schoolLogo ? `<img src="${schoolLogo}" alt="Logo" style="width:80px;height:80px;border-radius:50%;margin-bottom:10px;object-fit:contain;border:2px solid ${schoolColor};">` : ''}
+                                <h2 style="margin:0;font-size:28px;color:${schoolColor};font-weight:700;">${school?.name || 'School'}</h2>
+                                <p style="margin:8px 0 0;font-size:13px;color:#64748b;">${school?.address || ''} | ${school?.phone || ''} | ${school?.email || ''}</p>
+                                <p style="margin:15px 0 0;font-size:18px;font-weight:600;background:${schoolColor};color:#fff;padding:8px 20px;border-radius:20px;display:inline-block;">${term} Term Report Card - ${year}</p>
+                            </div>
+                            <div class="report-student-info" style="display:flex;flex-wrap:wrap;gap:20px;margin-bottom:25px;">
+                                <div style="flex:1;min-width:200px;background:${lightColor};padding:15px;border-radius:10px;border-left:4px solid ${schoolColor};">
+                                    <p style="margin:6px 0;"><strong>Student Name:</strong> ${this.currentChild.name}</p>
+                                    <p style="margin:6px 0;"><strong>Class:</strong> ${this.currentChild.class}</p>
+                                </div>
+                            </div>
+                            <table class="table" style="width:100%;border-collapse:collapse;border:2px solid ${schoolColor};margin-bottom:25px;border-radius:8px;overflow:hidden;">
+                                <thead>
+                                    <tr style="background:${schoolColor};color:#fff;">
+                                        <th style="border:1px solid ${borderColor};padding:12px;text-align:left;">Subject</th>
+                                        <th style="border:1px solid ${borderColor};padding:12px;text-align:center;">Score</th>
+                                        <th style="border:1px solid ${borderColor};padding:12px;text-align:center;">Grade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    if (subjects.length === 0) {
+                        html += '<tr><td colspan="3" class="text-center">No scores recorded for this term</td></tr>';
+                    } else {
+                        let grandTotal = 0;
+                        subjects.forEach((subject, idx) => {
+                            const score = subjectScores[subject] || 0;
+                            const grade = this.getGrade(score);
+                            grandTotal += score;
+                            const rowBg = idx % 2 === 0 ? '#fff' : '#f8fafc';
+                            
+                            html += `
+                                <tr style="background:${rowBg};">
+                                    <td style="border:1px solid ${borderColor};padding:10px;"><strong>${subject}</strong></td>
+                                    <td style="border:1px solid ${borderColor};padding:10px;text-align:center;font-weight:700;color:${schoolColor};font-size:16px;">${score}</td>
+                                    <td style="border:1px solid ${borderColor};padding:10px;text-align:center;"><span class="badge badge-${grade.letter >= 'C' ? 'success' : 'warning'}" style="padding:4px 12px;border-radius:12px;font-weight:600;">${grade.letter}</span></td>
+                                </tr>
+                            `;
+                        });
+                        
+                        const overallTotal = grandTotal;
+                        const overallAvg = grandTotal / subjects.length;
+                        const overallGrade = this.getGrade(overallAvg);
+                        
+                        html += `
+                                <tr style="background:${schoolColor};color:#fff;font-weight:bold;">
+                                    <td style="border:1px solid ${borderColor};padding:12px;">OVERALL TOTAL</td>
+                                    <td style="border:1px solid ${borderColor};padding:12px;text-align:center;font-size:16px;">${overallTotal}</td>
+                                    <td style="border:1px solid ${borderColor};padding:12px;text-align:center;"><span class="badge" style="background:#fff;color:${schoolColor};padding:4px 10px;border-radius:12px;font-weight:700;">${overallGrade.letter}</span></td>
+                                </tr>
+                        `;
+                    }
+                    
+html += '</tbody></table>';
+                    
+                    if (studentReport) {
+                        html += `
+                            <div class="report-comments mt-3" style="background:${lightColor};padding:15px;border-radius:10px;border-left:4px solid ${schoolColor};">
+                                <h4 style="color:${schoolColor};margin-bottom:10px;">Teacher's Comments</h4>
+                                <p style="margin:5px 0;"><strong>Academic:</strong> ${studentReport.academic || 'N/A'}</p>
+                                <p style="margin:5px 0;"><strong>Behavior:</strong> ${studentReport.behavior || 'N/A'}</p>
+                                <p style="margin:5px 0;"><strong>Attendance:</strong> ${studentReport.attendance || 'N/A'}</p>
+                                <p style="margin:5px 0;"><strong>Recommendation:</strong> ${studentReport.recommendation || 'N/A'}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    html += `
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 25px;">
+                            <div style="flex: 1; min-width: 200px; padding: 15px; border: 2px solid ${schoolColor}; border-radius: 10px; background: ${lightColor};">
+                                <h4 style="margin: 0 0 12px; border-bottom: 2px solid ${schoolColor}; padding-bottom: 8px; color: ${schoolColor}; font-weight: 600;"><i class="fas fa-calendar-check"></i> Attendance</h4>
+                                <table style="width: 100%;">
+                                    <tr><td style="padding: 6px; color: #64748b;">Present:</td><td style="padding: 6px; font-weight: 700; color: ${schoolColor}; font-size: 16px;">${presentDays} days</td></tr>
+                                    <tr><td style="padding: 6px; color: #64748b;">Total:</td><td style="padding: 6px; font-weight: 600;">${totalDays} days</td></tr>
+                                    <tr><td style="padding: 6px; color: #64748b;">Percentage:</td><td style="padding: 6px; font-weight: 700; color: ${schoolColor}; font-size: 18px;">${attendancePercentage}%</td></tr>
+                                </table>
+                            </div>
+                    `;
+                    
+                    if (studentReport) {
+                        html += `
+                            <div style="flex: 1; min-width: 200px; padding: 15px; border: 2px solid ${schoolColor}; border-radius: 10px; background: ${lightColor};">
+                                <h4 style="margin: 0 0 12px; border-bottom: 2px solid ${schoolColor}; padding-bottom: 8px; color: ${schoolColor}; font-weight: 600;"><i class="fas fa-comment"></i> Teacher's Comments</h4>
+                                <p style="margin: 5px 0; font-size: 13px;"><strong>Academic:</strong> ${studentReport.academic || 'N/A'}</p>
+                                <p style="margin: 5px 0; font-size: 13px;"><strong>Behavior:</strong> ${studentReport.behavior || 'N/A'}</p>
+                                <p style="margin: 5px 0; font-size: 13px;"><strong>Recommendation:</strong> ${studentReport.recommendation || 'N/A'}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                    
+                    html += `
+                        <div style="display: flex; justify-content: space-between; margin-top: 30px; padding-top: 25px; border-top: 3px solid ${schoolColor};">
+                            <div style="text-align: center; flex: 1;">
+                                <p style="margin-bottom: 40px; font-weight: 600; color: ${schoolColor};">Teacher's Signature:</p>
+                                <div style="width: 150px; height: 50px; border-bottom: 3px solid ${schoolColor}; margin: 0 auto; border-radius: 2px;"></div>
+                            </div>
+                            <div style="text-align: center; flex: 1;">
+                                <p style="margin-bottom: 40px; font-weight: 600; color: ${schoolColor};">Principal's/Director's Signature:</p>
+                                <div style="width: 150px; height: 50px; border-bottom: 3px solid ${schoolColor}; margin: 0 auto; border-radius: 2px;"></div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    html += `
+                        <div class="report-footer" style="margin-top: 25px; padding-top: 15px; border-top: 1px solid ${borderColor}; text-align: center;">
+                            <p style="margin: 8px 0; font-size: 11px; color: #64748b;"><strong>Grade Key:</strong> A (90-100): Excellent | B (80-89): Very Good | C (70-79): Good | D (60-69): Fair | E (50-59): Pass | F (0-49): Fail</p>
+                            <p style="margin: 8px 0; font-size: 10px; color: #94a3b8;"><i class="fas fa-school"></i> My School System - Odebunmi Tawwab</p>
+                        </div>
+                    `;
+                    container.innerHTML = html;
+                }
+            },
+            
+            getGrade(average) {
+                if (average >= 90) return { letter: 'A', grade: 'Excellent' };
+                if (average >= 80) return { letter: 'B', grade: 'Very Good' };
+                if (average >= 70) return { letter: 'C', grade: 'Good' };
+                if (average >= 60) return { letter: 'D', grade: 'Fair' };
+                if (average >= 50) return { letter: 'E', grade: 'Pass' };
+                return { letter: 'F', grade: 'Fail' };
+            },
+            
+            loadAttendance() {
+                const container = document.getElementById('attendanceContent');
+                if (!this.currentChild) {
+                    container.innerHTML = '<p class="text-muted">Select a child to view attendance</p>';
+                    return;
+                }
+                
+                const attendance = Storage.getAttendance(this.schoolId);
+                const studentAttendance = attendance.filter(a => a.studentId === this.currentChild.id);
+                const sorted = studentAttendance.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                if (sorted.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No attendance records found</p>';
+                    return;
+                }
+                
+                const present = sorted.filter(a => a.status === 'present').length;
+                const percent = Math.round((present / sorted.length) * 100);
+                
+                let html = `
+                    <div class="mb-3">
+                        <div class="stat-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div class="stat-card">
+                                <div class="stat-value">${sorted.length}</div>
+                                <div class="stat-label">Total Days</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" style="color: var(--success);">${present}</div>
+                                <div class="stat-label">Present</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" style="color: var(--danger);">${sorted.length - present}</div>
+                                <div class="stat-label">Absent</div>
+                            </div>
+                        </div>
+                        <p class="mt-2"><strong>Attendance Rate:</strong> ${percent}%</p>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                sorted.slice(0, 30).forEach(record => {
+                    html += `
+                        <tr>
+                            <td>${Utils.formatDate(record.date)}</td>
+                            <td>
+                                <span class="badge badge-${record.status === 'present' ? 'success' : 'danger'}">
+                                    ${record.status === 'present' ? 'Present' : 'Absent'}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            },
+            
+            initScoresSection() {
+                const select = document.getElementById('scoresChildSelect');
+                if (!select) return;
+                
+                const user = Auth.getCurrentUser();
+                const students = Storage.getStudents(this.schoolId);
+                const children = students.filter(s => s.parentPhone === user.phone || s.parentEmail === user.email);
+                
+                select.innerHTML = '<option value="">Select Child</option>' + 
+                    children.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                
+                if (children.length > 0) {
+                    select.value = children[0].id;
+                    this.loadScores();
+                }
+            },
+            
+            loadScores() {
+                const container = document.getElementById('scoresContent');
+                const childId = document.getElementById('scoresChildSelect')?.value;
+                const term = document.getElementById('scoresTermSelect')?.value;
+                const year = document.getElementById('scoresYearSelect')?.value;
+                
+                if (!childId) {
+                    container.innerHTML = '<p class="text-muted">Select a child to view scores</p>';
+                    return;
+                }
+                
+                const student = Storage.getItemById('students', childId);
+                const scoreTypes = Storage.getSchoolScoreTypes(this.schoolId);
+                const hasDaily = scoreTypes.includes('Daily');
+                const hasWeekly = scoreTypes.includes('Weekly');
+                
+                if (!hasDaily && !hasWeekly) {
+                    container.innerHTML = '<div class="alert alert-info">Your school does not use Daily or Weekly scores. Please check the Report Card section for term results.</div>';
+                    return;
+                }
+                
+                const scores = Storage.getScores(this.schoolId, childId).filter(s => s.term === term && s.year === parseInt(year));
+                const dailyScores = scores.filter(s => s.type === 'Daily');
+                const weeklyScores = scores.filter(s => s.type === 'Weekly');
+                
+                const subjectScores = {};
+                scores.forEach(s => {
+                    if (!subjectScores[s.subject]) subjectScores[s.subject] = { daily: [], weekly: [] };
+                    if (s.type === 'Daily') subjectScores[s.subject].daily.push(s.score);
+                    if (s.type === 'Weekly') subjectScores[s.subject].weekly.push(s.score);
+                });
+                
+                let html = `
+                    <h4>${student?.name} - ${term} ${year}</h4>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                ${hasDaily ? '<th>Daily Scores</th><th>Daily Avg</th>' : ''}
+                                ${hasWeekly ? '<th>Weekly Scores</th><th>Weekly Avg</th>' : ''}
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                Object.keys(subjectScores).forEach(subject => {
+                    const daily = subjectScores[subject].daily;
+                    const weekly = subjectScores[subject].weekly;
+                    const dailyAvg = daily.length > 0 ? (daily.reduce((a,b) => a+b, 0) / daily.length).toFixed(1) : '-';
+                    const weeklyAvg = weekly.length > 0 ? (weekly.reduce((a,b) => a+b, 0) / weekly.length).toFixed(1) : '-';
+                    const dailyTotal = daily.reduce((a,b) => a+b, 0);
+                    const weeklyTotal = weekly.reduce((a,b) => a+b, 0);
+                    const total = dailyTotal + weeklyTotal;
+                    
+                    html += `<tr><td><strong>${subject}</strong></td>`;
+                    if (hasDaily) {
+                        html += `<td>${daily.length > 0 ? daily.join(', ') : '-'}</td><td>${dailyAvg}</td>`;
+                    }
+                    if (hasWeekly) {
+                        html += `<td>${weekly.length > 0 ? weekly.join(', ') : '-'}</td><td>${weeklyAvg}</td>`;
+                    }
+                    html += `<td><strong>${total}</strong></td></tr>`;
+                });
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            },
+            
+            sendTeacherMessage() {
+                const subject = document.getElementById('teacherSubject').value.trim();
+                const message = document.getElementById('teacherMessage').value.trim();
+                
+                if (!subject || !message) {
+                    Toast.error('Please fill in all fields');
+                    return;
+                }
+                
+                if (!this.currentChild) {
+                    Toast.error('Please select a child first');
+                    return;
+                }
+                
+                this.saveMessage('teacher', subject, message);
+                Toast.success('Message sent to teacher');
+                document.getElementById('teacherSubject').value = '';
+                document.getElementById('teacherMessage').value = '';
+            },
+            
+            sendPrincipalMessage() {
+                const subject = document.getElementById('principalSubject').value.trim();
+                const message = document.getElementById('principalMessage').value.trim();
+                
+                if (!subject || !message) {
+                    Toast.error('Please fill in all fields');
+                    return;
+                }
+                
+                if (!this.currentChild) {
+                    Toast.error('Please select a child first');
+                    return;
+                }
+                
+                this.saveMessage('principal', subject, message);
+                Toast.success('Message sent to Principal/Director');
+                document.getElementById('principalSubject').value = '';
+                document.getElementById('principalMessage').value = '';
+            },
+            
+            saveMessage(type, subject, message) {
+                const messages = Storage.getData('parentMessages') || [];
+                messages.push({
+                    id: Storage.generateId(),
+                    parentId: Auth.getCurrentUser().id,
+                    studentId: this.currentChild.id,
+                    type,
+                    subject,
+                    message,
+                    schoolId: this.schoolId,
+                    createdAt: new Date().toISOString(),
+                    status: 'unread'
+                });
+                Storage.setData('parentMessages', messages);
+            },
+            
+            exportReportPDF() {
+                if (!this.currentChild) {
+                    Toast.error('Please select a child first');
+                    return;
+                }
+                
+                const term = document.getElementById('reportTermSelect').value;
+                const year = document.getElementById('reportYearSelect').value;
+                const school = Auth.getSchool();
+                const schoolColor = school?.idCardColor || '#16a34a';
+                const schoolLogo = school?.logoUrl || '';
+                const lightColor = schoolColor + '15';
+                const borderColor = schoolColor + '40';
+                
+                const scores = Storage.getScores(this.schoolId, this.currentChild.id);
+                const termScores = scores.filter(s => s.term === term && s.year === parseInt(year));
+                
+                const reports = Storage.getData('studentReports') || [];
+                const studentReport = reports.find(r => 
+                    r.studentId === this.currentChild.id && r.term === term && r.year === parseInt(year)
+                );
+                
+                const isThirdTerm = term.includes('Third');
+                
+                let html = '';
+                
+                if (isThirdTerm) {
+                    const firstTermScores = scores.filter(s => s.term.includes('First') && s.year === parseInt(year));
+                    const secondTermScores = scores.filter(s => s.term.includes('Second') && s.year === parseInt(year));
+                    const thirdTermScores = scores.filter(s => s.term.includes('Third') && s.year === parseInt(year));
+                    
+                    const subjScores = {};
+                    const allScores = [...firstTermScores, ...secondTermScores, ...thirdTermScores];
+                    allScores.forEach(s => {
+                        if (!subjScores[s.subject]) subjScores[s.subject] = { first: 0, second: 0, third: 0 };
+                        if (s.term.includes('First')) subjScores[s.subject].first = s.score;
+                        if (s.term.includes('Second')) subjScores[s.subject].second = s.score;
+                        if (s.term.includes('Third')) subjScores[s.subject].third = s.score;
+                    });
+                    
+                    const subjects = Object.keys(subjScores);
+                    const maxScore = subjects.length * 300;
+                    
+                    html = `<div id="reportCardExport" style="width:850px;background:#fff;padding:30px;font-family:'Segoe UI',Arial,sans-serif;border-radius:12px;border:3px solid ${schoolColor};">
+                        <div style="text-align:center;padding-bottom:20px;border-bottom:3px solid ${schoolColor};margin-bottom:25px;">
+                            ${schoolLogo ? `<img src="${schoolLogo}" alt="Logo" style="width:80px;height:80px;border-radius:50%;margin-bottom:10px;border:2px solid ${schoolColor};">` : ''}
+                            <h1 style="text-align:center;color:${schoolColor};margin-bottom:5px;font-size:28px;font-weight:700;">${school?.name || 'School'}</h1>
+                            <p style="text-align:center;margin:8px 0;font-size:13px;color:#64748b;">${school?.address || ''} | ${school?.phone || ''} | ${school?.email || ''}</p>
+                            <p style="text-align:center;font-size:18px;font-weight:600;background:${schoolColor};color:#fff;padding:10px 25px;border-radius:25px;display:inline-block;margin-top:15px;">Cumulative Report Card - ${year} (All Terms)</p>
+                        </div>
+                        <div style="background:${lightColor};padding:20px;margin:20px 0;border-radius:10px;border-left:4px solid ${schoolColor};">
+                            <table style="width:100%;border-collapse:collapse;">
+                                <tr><td style="padding:8px;"><strong>Student Name:</strong> ${this.currentChild.name}</td><td style="padding:8px;"><strong>Class:</strong> ${this.currentChild.class}</td></tr>
+                            </table>
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;margin:25px 0;border:2px solid ${schoolColor};border-radius:8px;overflow:hidden;">
+                            <tr style="background:${schoolColor};color:#fff;">
+                                <th style="border:1px solid ${borderColor};padding:12px;">Subject</th>
+                                <th style="border:1px solid ${borderColor};padding:12px;">1st Term</th>
+                                <th style="border:1px solid ${borderColor};padding:12px;">2nd Term</th>
+                                <th style="border:1px solid ${borderColor};padding:12px;">3rd Term</th>
+                                <th style="border:1px solid ${borderColor};padding:12px;">Total</th>
+                                <th style="border:1px solid ${borderColor};padding:12px;">Average</th>
+                                <th style="border:1px solid ${borderColor};padding:12px;">Grade</th>
+                            </tr>`;
+                    
+                    let grandTotal = 0;
+                    subjects.forEach((subject, idx) => {
+                        const first = subjScores[subject].first;
+                        const second = subjScores[subject].second;
+                        const third = subjScores[subject].third;
+                        const total = first + second + third;
+                        const avg = total / 3;
+                        grandTotal += total;
+                        const grade = this.getGrade(avg);
+                        const rowBg = idx % 2 === 0 ? '#fff' : '#f8fafc';
+                        
+                        html += `<tr style="background:${rowBg};">
+                            <td style="border:1px solid ${borderColor};padding:10px;"><strong>${subject}</strong></td>
+                            <td style="border:1px solid ${borderColor};padding:10px;text-align:center;">${first}</td>
+                            <td style="border:1px solid ${borderColor};padding:10px;text-align:center;">${second}</td>
+                            <td style="border:1px solid ${borderColor};padding:10px;text-align:center;">${third}</td>
+                            <td style="border:1px solid ${borderColor};padding:10px;text-align:center;font-weight:700;color:${schoolColor};">${total}</td>
+                            <td style="border:1px solid ${borderColor};padding:10px;text-align:center;">${avg.toFixed(1)}</td>
+                            <td style="border:1px solid ${borderColor};padding:10px;text-align:center;"><span style="background:${grade.letter >= 'C' ? schoolColor : '#f59e0b'};color:#fff;padding:4px 10px;border-radius:12px;font-weight:600;">${grade.letter}</span></td>
+                        </tr>`;
+                    });
+                    
+                    const percentage = (grandTotal / maxScore * 100).toFixed(1);
+                    const overallGrade = this.getGrade(grandTotal / subjects.length);
+                    
+                    html += `<tr style="background:${schoolColor};color:#fff;font-weight:bold;">
+                        <td colspan="3" style="border:1px solid ${borderColor};padding:12px;">OVERALL TOTAL</td>
+                        <td style="border:1px solid ${borderColor};padding:12px;text-align:center;">${grandTotal}</td>
+                        <td style="border:1px solid ${borderColor};padding:12px;text-align:center;">${(grandTotal / subjects.length).toFixed(1)}</td>
+                        <td style="border:1px solid ${borderColor};padding:12px;text-align:center;">${percentage}%</td>
+                        <td style="border:1px solid ${borderColor};padding:12px;text-align:center;"><span style="background:#fff;color:${schoolColor};padding:4px 10px;border-radius:12px;font-weight:700;">${overallGrade.letter}</span></td>
+                    </tr></table>`;
+                } else {
+                    const subjScores = {};
+                    termScores.forEach(s => {
+                        if (!subjScores[s.subject]) subjScores[s.subject] = 0;
+                        subjScores[s.subject] += s.score;
+                    });
+                    
+                    const subjects = Object.keys(subjScores);
+                    
+                    html = `<div id="reportCardExport" style="width:850px;background:#fff;padding:30px;font-family:'Segoe UI',Arial,sans-serif;border-radius:12px;border:3px solid ${schoolColor};">
+                        <div style="text-align:center;padding-bottom:20px;border-bottom:3px solid ${schoolColor};margin-bottom:25px;">
+                            ${schoolLogo ? `<img src="${schoolLogo}" alt="Logo" style="width:80px;height:80px;border-radius:50%;margin-bottom:10px;border:2px solid ${schoolColor};">` : ''}
+                            <h1 style="text-align:center;color:${schoolColor};margin-bottom:5px;font-size:28px;font-weight:700;">${school?.name || 'School'}</h1>
+                            <p style="text-align:center;margin:8px 0;font-size:13px;color:#64748b;">${school?.address || ''} | ${school?.phone || ''} | ${school?.email || ''}</p>
+                            <p style="text-align:center;font-size:18px;font-weight:600;background:${schoolColor};color:#fff;padding:10px 25px;border-radius:25px;display:inline-block;margin-top:15px;">${term} Term Report Card - ${year}</p>
+                        </div>
+                        <div style="background:${lightColor};padding:20px;margin:20px 0;border-radius:10px;border-left:4px solid ${schoolColor};">
+                            <table style="width:100%;border-collapse:collapse;">
+                                <tr><td style="padding:8px;"><strong>Student Name:</strong> ${this.currentChild.name}</td><td style="padding:8px;"><strong>Class:</strong> ${this.currentChild.class}</td></tr>
+                            </table>
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;margin:25px 0;border:2px solid ${schoolColor};border-radius:8px;overflow:hidden;">
+                            <tr style="background:${schoolColor};color:#fff;">
+                                <th style="border:1px solid ${borderColor};padding:12px;">Subject</th>
+                                <th style="border:1px solid ${borderColor};padding:12px;">Score</th>
+                                <th style="border:1px solid ${borderColor};padding:12px;">Grade</th>
+                            </tr>`;
+                    
+                    let grandTotal = 0;
+                    subjects.forEach((subject, idx) => {
+                        const score = subjScores[subject];
+                        grandTotal += score;
+                        const grade = this.getGrade(score);
+                        const rowBg = idx % 2 === 0 ? '#fff' : '#f8fafc';
+                        
+                        html += `<tr style="background:${rowBg};">
+                            <td style="border:1px solid ${borderColor};padding:10px;"><strong>${subject}</strong></td>
+                            <td style="border:1px solid ${borderColor};padding:10px;text-align:center;font-weight:700;color:${schoolColor};font-size:18px;">${score}</td>
+                            <td style="border:1px solid ${borderColor};padding:10px;text-align:center;"><span style="background:${grade.letter >= 'C' ? schoolColor : '#f59e0b'};color:#fff;padding:4px 12px;border-radius:12px;font-weight:600;">${grade.letter}</span></td>
+                        </tr>`;
+                    });
+                    
+                    const overallAvg = grandTotal / subjects.length;
+                    const overallGrade = this.getGrade(overallAvg);
+                    
+                    html += `<tr style="background:${schoolColor};color:#fff;font-weight:bold;">
+                        <td style="border:1px solid ${borderColor};padding:12px;">Overall Total / Average</td>
+                        <td style="border:1px solid ${borderColor};padding:12px;text-align:center;font-size:16px;">${grandTotal} / ${overallAvg.toFixed(1)}</td>
+                        <td style="border:1px solid ${borderColor};padding:12px;text-align:center;"><span style="background:#fff;color:${schoolColor};padding:4px 10px;border-radius:12px;font-weight:700;">${overallGrade.letter}</span></td>
+                    </tr></table>`;
+                }
+                
+                if (studentReport) {
+                    html += `<div style="background:${lightColor};padding:20px;border-radius:10px;border-left:4px solid ${schoolColor};margin:20px 0;">
+                        <h4 style="color:${schoolColor};margin-bottom:12px;">Teacher's Comments</h4>
+                        <p style="margin:8px 0;"><strong>Academic:</strong> ${studentReport.academic || 'N/A'}</p>
+                        <p style="margin:8px 0;"><strong>Behavior:</strong> ${studentReport.behavior || 'N/A'}</p>
+                        <p style="margin:8px 0;"><strong>Recommendation:</strong> ${studentReport.recommendation || 'N/A'}</p>
+                    </div>`;
+                }
+                
+                html += `<div style="display:flex;justify-content:space-between;margin-top:30px;padding-top:25px;border-top:3px solid ${schoolColor};">
+                    <div style="text-align:center;flex:1;">
+                        <p style="margin-bottom:40px;font-weight:600;color:${schoolColor};">Teacher's Signature:</p>
+                        <div style="width:150px;height:50px;border-bottom:3px solid ${schoolColor};margin:0 auto;border-radius:2px;"></div>
+                    </div>
+                    <div style="text-align:center;flex:1;">
+                        <p style="margin-bottom:40px;font-weight:600;color:${schoolColor};">Principal's/Director's Signature:</p>
+                        <div style="width:150px;height:50px;border-bottom:3px solid ${schoolColor};margin:0 auto;border-radius:2px;"></div>
+                    </div>
+                </div>
+                <p style="text-align:center;font-size:10px;color:#94a3b8;margin-top:25px;padding-top:15px;border-top:1px solid ${borderColor};"><i class="fas fa-school"></i> My School System - Odebunmi Tawwab</p>
+            </div>`;
+                
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                document.body.appendChild(temp);
+                
+                if (window.html2canvas && window.jspdf) {
+                    Loading.show();
+                    window.html2canvas(temp.querySelector('#reportCardExport'), { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                        const imgData = canvas.toDataURL('image/png');
+                        const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'pt', format: [canvas.width, canvas.height] });
+                        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                        pdf.save(`ReportCard_${this.currentChild.name.replace(/\s/g, '_')}_${term}_${year}.pdf`);
+                        document.body.removeChild(temp);
+                        Loading.hide();
+                        Toast.success('Report exported to PDF');
+                    }).catch(err => {
+                        document.body.removeChild(temp);
+                        Loading.hide();
+                        Toast.error('Error generating PDF: ' + err.message);
+                    });
+                } else {
+                    document.body.removeChild(temp);
+                    Toast.error('PDF export requires html2canvas and jsPDF libraries');
+                }
+            },
+            
+            exportReportCSV() {
+                if (!this.currentChild) {
+                    Toast.error('Please select a child first');
+                    return;
+                }
+                
+                const term = document.getElementById('reportTermSelect').value;
+                const year = document.getElementById('reportYearSelect').value;
+                const scores = Storage.getScores(this.schoolId, this.currentChild.id);
+                const termScores = scores.filter(s => s.term === term && s.year === parseInt(year));
+                
+                let csv = 'Subject,Daily,Weekly,Mid-term,Exam,Total,Grade\n';
+                
+                const subjectScores = {};
+                termScores.forEach(s => {
+                    if (!subjectScores[s.subject]) subjectScores[s.subject] = {};
+                    subjectScores[s.subject][s.type] = s.score;
+                });
+                
+                Object.keys(subjectScores).forEach(subject => {
+                    const daily = subjectScores[subject].daily || 0;
+                    const weekly = subjectScores[subject].weekly || 0;
+                    const midterm = subjectScores[subject].midterm || 0;
+                    const exam = subjectScores[subject].exam || 0;
+                    const total = daily + weekly + midterm + exam;
+                    const grade = this.getGrade(total / 4).letter;
+                    
+                    csv += `${subject},${daily},${weekly},${midterm},${exam},${total},${grade}\n`;
+                });
+                
+                csv += `\nMy School System - Odebunmi Tawwab`;
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ReportCard_${this.currentChild.name}_${term}_${year}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                Toast.success('Report exported to CSV');
+            },
+            
+            exportAttendanceCSV() {
+                if (!this.currentChild) {
+                    Toast.error('Please select a child first');
+                    return;
+                }
+                
+                const attendance = Storage.getAttendance(this.schoolId);
+                const studentAttendance = attendance.filter(a => a.studentId === this.currentChild.id);
+                
+                let csv = 'Date,Status\n';
+                studentAttendance.forEach(record => {
+                    csv += `${record.date},${record.status}\n`;
+                });
+                
+                csv += `\nMy School System - Odebunmi Tawwab`;
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Attendance_${this.currentChild.name}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                Toast.success('Attendance exported to CSV');
+            },
+            
+            loadHelpGuide() {
+                const content = Storage.getHelpContent('parent');
+                const container = document.getElementById('helpGuideContainer');
+                
+                if (!content || !content.sections || !content.sections.length) {
+                    container.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h3>Welcome to Parent Portal!</h3>
+                                <p>This portal allows you to:</p>
+                                <ul>
+                                    <li>View your child's report cards</li>
+                                    <li>Check attendance records</li>
+                                    <li>Contact your child's teacher</li>
+                                    <li>Contact the school principal</li>
+                                    <li>Export reports for your records</li>
+                                </ul>
+                                <h4 class="mt-3">How to Get Started:</h4>
+                                <ol>
+                                    <li>Login with your parent account credentials</li>
+                                    <li>Select your child from the dashboard</li>
+                                    <li>Navigate to Report Card or Attendance to view details</li>
+                                    <li>Use the Contact School section to message teachers</li>
+                                </ol>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '<div class="help-guide-container"><div class="help-guide-header"><h2>' + content.title + '</h2></div><div class="help-guide-accordion">';
+                
+                content.sections.forEach((section, index) => {
+                    html += `
+                        <div class="help-accordion-item ${index === 0 ? 'active' : ''}">
+                            <div class="help-accordion-header" onclick="this.parentElement.classList.toggle('active')">
+                                <div class="help-accordion-title">
+                                    <i class="fas ${section.icon || 'fa-book'}"></i>
+                                    <span>${section.title}</span>
+                                </div>
+                                <i class="fas fa-chevron-down help-accordion-arrow"></i>
+                            </div>
+                            <div class="help-accordion-body">
+                                <div class="help-content">${section.content}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div></div>';
+                container.innerHTML = html;
+            },
+            
+            showProfile() {
+                const user = Auth.getCurrentUser();
+                Toast.info('Logged in as: ' + user.name);
+            },
+            
+            initTestResultsSection() {
+                const select = document.getElementById('testResultsChildSelect');
+                if (!select) return;
+                
+                const user = Auth.getCurrentUser();
+                const students = Storage.getStudents(this.schoolId);
+                const children = students.filter(s => s.parentPhone === user.phone || s.parentEmail === user.email);
+                
+                select.innerHTML = '<option value="">Select Child</option>' + 
+                    children.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                
+                if (children.length > 0) {
+                    select.value = children[0].id;
+                    this.loadTestResults();
+                }
+            },
+            
+            loadTestResults() {
+                const container = document.getElementById('testResultsContent');
+                const childId = document.getElementById('testResultsChildSelect')?.value;
+                const testType = document.getElementById('testResultsTypeFilter')?.value;
+                
+                if (!childId) {
+                    container.innerHTML = '<p class="text-muted">Select a child to view test results</p>';
+                    return;
+                }
+                
+                let results = Storage.getData('testResults') || [];
+                results = results.filter(r => r.studentId === childId && r.schoolId === this.schoolId);
+                
+                if (testType) {
+                    results = results.filter(r => r.testType === testType);
+                }
+                
+                results.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+                
+                // Calculate stats
+                if (results.length > 0) {
+                    const avg = results.reduce((sum, r) => sum + r.percentage, 0) / results.length;
+                    const best = Math.max(...results.map(r => r.percentage));
+                    document.getElementById('testAvgScore').textContent = Math.round(avg) + '%';
+                    document.getElementById('testBestScore').textContent = Math.round(best) + '%';
+                    document.getElementById('testCount').textContent = results.length;
+                } else {
+                    document.getElementById('testAvgScore').textContent = '-';
+                    document.getElementById('testBestScore').textContent = '-';
+                    document.getElementById('testCount').textContent = '0';
+                }
+                
+                if (!results.length) {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-clipboard-list"></i><h3>No test results</h3><p>Your child has not taken any tests yet</p></div>';
+                    return;
+                }
+                
+                let html = '<div class="table-container"><table class="table"><thead><tr><th>Test</th><th>Subject</th><th>Type</th><th>Score</th><th>Percentage</th><th>Date</th></tr></thead><tbody>';
+                
+                results.forEach(r => {
+                    let scoreClass = 'poor';
+                    if (r.percentage >= 90) scoreClass = 'excellent';
+                    else if (r.percentage >= 70) scoreClass = 'good';
+                    else if (r.percentage >= 50) scoreClass = 'average';
+                    
+                    html += '<tr>';
+                    html += '<td>' + r.testTitle + '</td>';
+                    html += '<td>' + r.subject + '</td>';
+                    html += '<td><span class="test-type-badge ' + r.testType + '">' + r.testType + '</span></td>';
+                    html += '<td>' + r.obtainedMarks + '/' + r.totalMarks + '</td>';
+                    html += '<td class="' + scoreClass + '">' + Math.round(r.percentage) + '%</td>';
+                    html += '<td>' + new Date(r.completedAt).toLocaleDateString() + '</td>';
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            },
+            
+            logout() {
+                Auth.logout();
+                window.location.href = 'parent-login.html';
+            },
+            
+            loadAnnouncements() {
+                const schoolId = this.schoolId;
+                const announcements = Storage.getParentAnnouncements(schoolId);
+                const container = document.getElementById('parentAnnouncementsList');
+                
+                if (!announcements || announcements.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-bullhorn"></i><p>No announcements from the school</p></div>';
+                    return;
+                }
+                
+                let html = '';
+                announcements.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(ann => {
+                    const date = new Date(ann.createdAt).toLocaleDateString();
+                    html += `
+                        <div style="padding: 15px; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; align-items: start; gap: 12px;">
+                                <div style="background: var(--primary); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="fas fa-bullhorn"></i>
+                                </div>
+                                <div>
+                                    <p style="margin: 0 0 8px; font-weight: 500;">${ann.message}</p>
+                                    <small class="text-muted">${date}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+        };
+
+        function toggleDarkMode() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+        }
+
+        function toggleSidebar() {
+            document.body.classList.toggle('sidebar-open');
+        }
+
+        window.ParentDashboard = ParentDashboard;
+    </script>
+</body>
+</html>

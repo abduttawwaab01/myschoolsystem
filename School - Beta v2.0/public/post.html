@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Post - My School System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/public.css">
+    <style>
+        :root { --primary: #16a34a; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="public-header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <span>My School System</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Post Content -->
+    <article class="container single-post" id="postContent">
+        <div class="loading"><div class="spinner"></div></div>
+    </article>
+
+    <!-- Related Posts -->
+    <section class="container" id="relatedPosts" style="display:none;">
+        <h2 style="margin: 3rem 0 1.5rem;">Related Articles</h2>
+        <div class="blog-grid" id="relatedGrid"></div>
+    </section>
+
+    <!-- Comments Section -->
+    <section class="container comments-section" id="commentsSection" style="display:none;">
+        <div class="comments-title">
+            <i class="fas fa-comments"></i> Comments (<span id="commentCount">0</span>)
+        </div>
+        
+        <!-- Comment Form -->
+        <div class="comment-form" id="commentForm">
+            <h4>Leave a Comment</h4>
+            <div class="form-group">
+                <input type="text" class="form-control" id="commentName" placeholder="Your Name *" required>
+            </div>
+            <div class="form-group">
+                <input type="email" class="form-control" id="commentEmail" placeholder="Your Email (optional)">
+            </div>
+            <div class="form-group">
+                <textarea class="form-control" id="commentContent" rows="4" placeholder="Write your comment..." required></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="Post.submitComment()">
+                <i class="fas fa-paper-plane"></i> Submit Comment
+            </button>
+        </div>
+        
+        <!-- Comments List -->
+        <div class="comments-list" id="commentsList"></div>
+    </section>
+
+    <!-- No Comments Message -->
+    <section class="container" id="noComments" style="display:none;">
+        <div class="empty-state">
+            <i class="fas fa-comment-slash"></i>
+            <h3>Comments Disabled</h3>
+            <p>Comments are disabled for this post.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="public-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div class="footer-brand">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>My School System</span>
+                    </div>
+                    <p class="footer-description">A comprehensive school management solution for modern educational institutions.</p>
+                </div>
+                <div>
+                    <h4 class="footer-title">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="resources.html">Resources</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="terms.html">Terms & Conditions</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Contact</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">support@myschoolsystem.com</a></li>
+                        <li><a href="#">+234 800 123 4567</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 My School System. All rights reserved. | My School System - Odebunmi Tawwab</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/public.js"></script>
+    <script>
+        const Post = {
+            postId: null,
+            
+            init() {
+                const params = new URLSearchParams(window.location.search);
+                this.postId = params.get('id');
+                
+                if (!this.postId) {
+                    window.location.href = 'blog.html';
+                    return;
+                }
+                
+                this.loadPost();
+            },
+            
+            loadPost() {
+                const post = PublicContent.getBlogPost(this.postId);
+                
+                if (!post) {
+                    document.getElementById('postContent').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <h3>Post Not Found</h3>
+                            <p>The post you're looking for doesn't exist.</p>
+                            <a href="blog.html" class="btn btn-primary">Back to Blog</a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                PublicContent.incrementPostViews(this.postId);
+                
+                const container = document.getElementById('postContent');
+                const imageUrl = post.featuredImage || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200';
+                
+                let mediaHtml = '';
+                
+                // YouTube Video
+                if (post.videoUrl && post.videoUrl.includes('youtube.com')) {
+                    const videoId = post.videoUrl.split('v=')[1]?.split('&')[0];
+                    if (videoId) {
+                        mediaHtml += `
+                            <div class="media-embed">
+                                <div class="video-container">
+                                    <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                // MP4 Video
+                else if (post.videoUrl && post.videoUrl.endsWith('.mp4')) {
+                    mediaHtml += `
+                        <div class="media-embed">
+                            <div class="video-container">
+                                <video controls style="width:100%;border-radius:12px;">
+                                    <source src="${post.videoUrl}" type="video/mp4">
+                                    Your browser does not support video.
+                                </video>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Audio
+                if (post.audioUrl) {
+                    mediaHtml += `
+                        <div class="audio-player">
+                            <audio controls style="width:100%;">
+                                <source src="${post.audioUrl}" type="audio/mpeg">
+                                Your browser does not support audio.
+                            </audio>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = `
+                    <header class="post-header">
+                        <span class="post-category">${post.category}</span>
+                        <h1 class="post-title">${post.title}</h1>
+                        <div class="post-meta">
+                            <span><i class="fas fa-calendar"></i> ${PublicContent.formatDate(post.createdAt)}</span>
+                            <span><i class="fas fa-eye"></i> ${(post.views || 0) + 1} views</span>
+                            ${post.commentsEnabled ? `<span><i class="fas fa-comments"></i> ${PublicContent.getComments(post.id).length} comments</span>` : ''}
+                        </div>
+                    </header>
+                    
+                    <img src="${imageUrl}" alt="${post.title}" class="post-featured-image">
+                    
+                    ${mediaHtml}
+                    
+                    <div class="post-content">
+                        ${post.content}
+                    </div>
+                    
+                    <!-- Share Buttons -->
+                    <div style="margin-top: 2rem; padding: 1.5rem; background: var(--gray-100); border-radius: 12px;">
+                        <h4 style="margin-bottom: 1rem;">Share this article</h4>
+                        <div style="display: flex; gap: 1rem;">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}" target="_blank" class="btn btn-sm" style="background: #1877f2; color: white;"><i class="fab fa-facebook-f"></i> Facebook</a>
+                            <a href="https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(post.title)}" target="_blank" class="btn btn-sm" style="background: #1da1f2; color: white;"><i class="fab fa-twitter"></i> Twitter</a>
+                            <a href="https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(window.location.href)}" target="_blank" class="btn btn-sm" style="background: #0a66c2; color: white;"><i class="fab fa-linkedin-in"></i> LinkedIn</a>
+                            <a href="mailto:?subject=${encodeURIComponent(post.title)}&body=Check out this article: ${encodeURIComponent(window.location.href)}" class="btn btn-sm" style="background: #ea4335; color: white;"><i class="fas fa-envelope"></i> Email</a>
+                        </div>
+                    </div>
+                `;
+                
+                // Load related posts
+                this.loadRelatedPosts(post.category, post.id);
+                
+                // Load comments
+                if (post.commentsEnabled) {
+                    this.loadComments();
+                } else {
+                    document.getElementById('commentsSection').style.display = 'none';
+                    document.getElementById('noComments').style.display = 'block';
+                }
+            },
+            
+            loadRelatedPosts(category, currentId) {
+                const posts = PublicContent.getPublishedPosts()
+                    .filter(p => p.category === category && p.id !== currentId)
+                    .slice(0, 3);
+                
+                if (posts.length === 0) return;
+                
+                const container = document.getElementById('relatedPosts');
+                const grid = document.getElementById('relatedGrid');
+                
+                let html = '';
+                posts.forEach(post => {
+                    const imageUrl = post.featuredImage || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400';
+                    
+                    html += `
+                        <div class="blog-card">
+                            <img src="${imageUrl}" alt="${post.title}" class="blog-card-image" onclick="window.location.href='post.html?id=${post.id}'" style="cursor:pointer;">
+                            <div class="blog-card-body">
+                                <span class="blog-card-category">${post.category}</span>
+                                <h3 class="blog-card-title"><a href="post.html?id=${post.id}">${post.title}</a></h3>
+                                <p class="blog-card-excerpt">${post.excerpt || PublicContent.generateExcerpt(post.content)}</p>
+                                <div class="blog-card-footer">
+                                    <span><i class="fas fa-calendar"></i> ${PublicContent.formatDate(post.createdAt)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                grid.innerHTML = html;
+                container.style.display = 'block';
+            },
+            
+            loadComments() {
+                const comments = PublicContent.getComments(this.postId);
+                const container = document.getElementById('commentsList');
+                const countSpan = document.getElementById('commentCount');
+                
+                countSpan.textContent = comments.length;
+                
+                if (comments.length === 0) {
+                    container.innerHTML = '<div class="empty-state" style="padding: 2rem;"><p>No comments yet. Be the first to comment!</p></div>';
+                    return;
+                }
+                
+                let html = '';
+                comments.forEach(comment => {
+                    html += `
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <span class="comment-author"><i class="fas fa-user-circle"></i> ${comment.authorName}</span>
+                                <span class="comment-date">${PublicContent.timeAgo(comment.createdAt)}</span>
+                            </div>
+                            <div class="comment-content">${comment.content}</div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
+            
+            submitComment() {
+                const name = document.getElementById('commentName').value.trim();
+                const email = document.getElementById('commentEmail').value.trim();
+                const content = document.getElementById('commentContent').value.trim();
+                
+                if (!name || !content) {
+                    alert('Please enter your name and comment');
+                    return;
+                }
+                
+                PublicContent.addComment({
+                    postId: this.postId,
+                    authorName: name,
+                    authorEmail: email,
+                    content: content
+                });
+                
+                document.getElementById('commentName').value = '';
+                document.getElementById('commentEmail').value = '';
+                document.getElementById('commentContent').value = '';
+                
+                this.loadComments();
+                alert('Comment submitted successfully!');
+            }
+        };
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            Post.init();
+        });
+    </script>
+</body>
+</html>

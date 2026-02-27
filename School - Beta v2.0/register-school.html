@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register School - My School</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./assets/css/style.css">
+    
+    <!-- Firebase SDK -->
+    <script src="./assets/js/firebase-config.js"></script>
+    <script src="./assets/js/storage.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/core.js"></script>
+    <script>
+        // Password toggle - runs immediately
+        (function() {
+            document.querySelectorAll('.toggle-password').forEach(function(btn) {
+                btn.onclick = function() {
+                    var input = this.closest('.password-input').querySelector('input');
+                    var icon = this.querySelector('i');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                };
+            });
+        })();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('registerSchoolForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = {
+                        activationCode: document.getElementById('activationCode').value.trim(),
+                        schoolName: document.getElementById('schoolName').value.trim(),
+                        schoolAlias: document.getElementById('schoolAlias').value.trim(),
+                        schoolEmail: document.getElementById('schoolEmail').value.trim(),
+                        schoolPhone: document.getElementById('schoolPhone').value.trim(),
+                        schoolAddress: document.getElementById('schoolAddress').value.trim(),
+                        schoolType: document.getElementById('schoolType').value,
+                        currency: document.getElementById('currency').value,
+                        adminName: document.getElementById('adminName').value.trim(),
+                        adminUsername: document.getElementById('adminUsername').value.trim(),
+                        adminEmail: document.getElementById('adminEmail').value.trim(),
+                        adminPhone: document.getElementById('adminPhone').value.trim(),
+                        adminPassword: document.getElementById('adminPassword').value
+                    };
+                    
+                    const confirmPassword = document.getElementById('adminConfirmPassword').value;
+                    
+                    if (formData.adminPassword !== confirmPassword) {
+                        Toast.error('Passwords do not match');
+                        return;
+                    }
+                    
+                    if (formData.adminPassword.length < 8) {
+                        Toast.error('Password must be at least 8 characters');
+                        return;
+                    }
+                    
+                    const result = Auth.registerSchool(formData);
+                    
+                    if (result.success) {
+                        Toast.success('School registered successfully! Redirecting to login...');
+                        setTimeout(() => {
+                            window.location.href = './login.html';
+                        }, 2000);
+                    } else {
+                        Toast.error(result.message || 'Registration failed');
+                    }
+                });
+            }
+        });
+    </script>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card register-card">
+            <div class="auth-header">
+                <a href="./index.html" class="back-home">
+                    <i class="fas fa-arrow-left"></i> Back to Home
+                </a>
+                <div class="auth-logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>My School</span>
+                </div>
+                <h1>Register Your School</h1>
+                <p>Enter your school details and activation code</p>
+            </div>
+            <form id="registerSchoolForm" class="auth-form">
+                <div class="form-section-title">
+                    <i class="fas fa-key"></i> Activation Code
+                </div>
+                
+                <div class="form-group">
+                    <label for="activationCode">
+                        <i class="fas fa-code"></i> Enter Code *
+                    </label>
+                    <input type="text" id="activationCode" name="activationCode" required
+                               placeholder="Enter activation code" maxlength="20" 
+                               style="font-family: monospace; letter-spacing: 2px; text-transform: uppercase;">
+                </div>
+                
+                <div class="form-section-title">
+                    <i class="fas fa-school"></i> School Information
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="schoolName">
+                            <i class="fas fa-building"></i> School Name *
+                        </label>
+                        <input type="text" id="schoolName" name="schoolName" required 
+                               placeholder="Enter school name">
+                    </div>
+                    <div class="form-group">
+                        <label for="schoolAlias">
+                            <i class="fas fa-tag"></i> School Alias
+                        </label>
+                        <input type="text" id="schoolAlias" name="schoolAlias" 
+                               placeholder="Short name (e.g., GPS)">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="schoolEmail">
+                            <i class="fas fa-envelope"></i> School Email
+                        </label>
+                        <input type="email" id="schoolEmail" name="schoolEmail" 
+                               placeholder="school@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="schoolPhone">
+                            <i class="fas fa-phone"></i> Phone Number
+                        </label>
+                        <input type="tel" id="schoolPhone" name="schoolPhone" 
+                               placeholder="+234xxxxxxxxxx">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="schoolAddress">
+                        <i class="fas fa-map-marker-alt"></i> Address
+                    </label>
+                    <textarea id="schoolAddress" name="schoolAddress" 
+                              placeholder="Enter school address" rows="2"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="schoolType">
+                            <i class="fas fa-graduation-cap"></i> School Type *
+                        </label>
+                        <select id="schoolType" name="schoolType" required>
+                            <option value="">Select type</option>
+                            <option value="primary">Primary School</option>
+                            <option value="secondary">Secondary School</option>
+                            <option value="both">Primary & Secondary</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="currency">
+                            <i class="fas fa-money-bill-wave"></i> Currency *
+                        </label>
+                        <select id="currency" name="currency" required>
+                            <option value="NGN">Nigerian Naira (NGN)</option>
+                            <option value="USD">US Dollar (USD)</option>
+                            <option value="EUR">Euro (EUR)</option>
+                            <option value="GBP">British Pound (GBP)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-section-title">
+                    <i class="fas fa-user-tie"></i> Admin Account
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adminName">
+                            <i class="fas fa-user"></i> Full Name *
+                        </label>
+                        <input type="text" id="adminName" name="adminName" required 
+                               placeholder="Enter full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminUsername">
+                            <i class="fas fa-at"></i> Username *
+                        </label>
+                        <input type="text" id="adminUsername" name="adminUsername" required 
+                               placeholder="Choose username">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adminEmail">
+                            <i class="fas fa-envelope"></i> Email *
+                        </label>
+                        <input type="email" id="adminEmail" name="adminEmail" required 
+                               placeholder="admin@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPhone">
+                            <i class="fas fa-phone"></i> Phone *
+                        </label>
+                        <input type="tel" id="adminPhone" name="adminPhone" required 
+                               placeholder="+234xxxxxxxxxx">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adminPassword">
+                            <i class="fas fa-lock"></i> Password *
+                        </label>
+                        <div class="password-input">
+                            <input type="password" id="adminPassword" name="adminPassword" required 
+                                   placeholder="Create password" minlength="8">
+                            <button type="button" class="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminConfirmPassword">
+                            <i class="fas fa-lock"></i> Confirm Password *
+                        </label>
+                        <div class="password-input">
+                            <input type="password" id="adminConfirmPassword" name="adminConfirmPassword" required 
+                                   placeholder="Confirm password" minlength="8">
+                            <button type="button" class="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group terms">
+                    <label>
+                        <input type="checkbox" id="acceptTerms" required>
+                        <span>I accept the <a href="#">Terms and Conditions</a></span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-school"></i> Register School
+                </button>
+            </form>
+            <div class="auth-footer">
+                <p>Already have an account? <a href="./login.html">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+</body>
+</html>

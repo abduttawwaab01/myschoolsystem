@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resources - My School System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/public.css">
+    <style>
+        :root { --primary: #16a34a; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="public-header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <span>My School System</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="resources.html" class="active">Resources</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="blog-hero" style="background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);">
+        <div class="container">
+            <h1>Resources</h1>
+            <p>Download useful documents, guides, and learning materials</p>
+        </div>
+    </section>
+
+    <!-- Search & Filter -->
+    <section class="container" style="padding-top: 2rem;">
+        <div class="search-box">
+            <input type="text" class="search-input" id="resourceSearchInput" placeholder="Search resources..." onkeyup="Resources.search()">
+            <button class="search-button"><i class="fas fa-search"></i></button>
+        </div>
+        <div class="categories-list" id="categoryList">
+            <a href="#" class="category-tag active" data-category="" onclick="Resources.filterCategory('')">All</a>
+            <a href="#" class="category-tag" data-category="Documents" onclick="Resources.filterCategory('Documents')"><i class="fas fa-file-pdf"></i> Documents</a>
+            <a href="#" class="category-tag" data-category="Videos" onclick="Resources.filterCategory('Videos')"><i class="fas fa-video"></i> Videos</a>
+            <a href="#" class="category-tag" data-category="Audio" onclick="Resources.filterCategory('Audio')"><i class="fas fa-music"></i> Audio</a>
+            <a href="#" class="category-tag" data-category="Images" onclick="Resources.filterCategory('Images')"><i class="fas fa-image"></i> Images</a>
+            <a href="#" class="category-tag" data-category="Archives" onclick="Resources.filterCategory('Archives')"><i class="fas fa-file-archive"></i> Archives</a>
+        </div>
+    </section>
+
+    <!-- Resources Grid -->
+    <section class="container">
+        <div class="resources-grid" id="resourcesGrid">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
+    </section>
+
+    <!-- No Resources -->
+    <section class="container" id="noResources" style="display:none;">
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <h3>No Resources Found</h3>
+            <p>Check back later for new resources!</p>
+        </div>
+    </section>
+
+    <!-- Featured Resources -->
+    <section class="container" id="featuredResources" style="display:none;">
+        <h2 style="margin: 3rem 0 1.5rem;"><i class="fas fa-star"></i> Popular Downloads</h2>
+        <div class="resources-grid" id="popularGrid"></div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="public-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div class="footer-brand">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>My School System</span>
+                    </div>
+                    <p class="footer-description">A comprehensive school management solution for modern educational institutions.</p>
+                </div>
+                <div>
+                    <h4 class="footer-title">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="resources.html">Resources</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="terms.html">Terms & Conditions</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Contact</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">support@myschoolsystem.com</a></li>
+                        <li><a href="#">+234 800 123 4567</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 My School System. All rights reserved. | My School System - Odebunmi Tawwab</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/public.js"></script>
+    <script>
+        const Resources = {
+            currentCategory: '',
+            
+            init() {
+                this.loadResources();
+            },
+            
+            loadResources() {
+                const resources = PublicContent.getResources();
+                const container = document.getElementById('resourcesGrid');
+                const noResources = document.getElementById('noResources');
+                
+                if (resources.length === 0) {
+                    container.innerHTML = '';
+                    noResources.style.display = 'block';
+                    return;
+                }
+                
+                noResources.style.display = 'none';
+                this.renderResources(resources);
+            },
+            
+            renderResources(resources) {
+                const container = document.getElementById('resourcesGrid');
+                
+                const iconMap = {
+                    'Documents': 'fa-file-pdf',
+                    'Videos': 'fa-video',
+                    'Audio': 'fa-music',
+                    'Images': 'fa-image',
+                    'Archives': 'fa-file-archive'
+                };
+                
+                const colorMap = {
+                    'Documents': '#dc2626',
+                    'Videos': '#7c3aed',
+                    'Audio': '#f59e0b',
+                    'Images': '#10b981',
+                    'Archives': '#3b82f6'
+                };
+                
+                let html = '';
+                resources.forEach(res => {
+                    const icon = iconMap[res.category] || 'fa-file';
+                    const color = colorMap[res.category] || '#16a34a';
+                    
+                    html += `
+                        <div class="resource-card">
+                            <div class="resource-icon" style="background: linear-gradient(135deg, ${color}, ${color}cc);">
+                                <i class="fas ${icon}"></i>
+                            </div>
+                            <span class="resource-category">${res.category}</span>
+                            <h3 class="resource-title">${res.title}</h3>
+                            <p class="resource-description">${res.description || 'No description available'}</p>
+                            <div class="resource-meta">
+                                <span><i class="fas fa-download"></i> ${res.downloads || 0} downloads</span>
+                            </div>
+                            <a href="${res.fileUrl}" target="_blank" class="btn btn-primary btn-block" style="margin-top: 1rem;" onclick="Resources.trackDownload('${res.id}')">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
+            
+            filterCategory(category) {
+                this.currentCategory = category;
+                
+                document.querySelectorAll('.category-tag').forEach(tag => {
+                    tag.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                const resources = category ? PublicContent.getResources(category) : PublicContent.getResources();
+                const container = document.getElementById('resourcesGrid');
+                const noResources = document.getElementById('noResources');
+                
+                if (resources.length === 0) {
+                    container.innerHTML = '';
+                    noResources.style.display = 'block';
+                    return;
+                }
+                
+                noResources.style.display = 'none';
+                this.renderResources(resources);
+            },
+            
+            search() {
+                const query = document.getElementById('resourceSearchInput').value;
+                
+                if (!query) {
+                    this.filterCategory(this.currentCategory);
+                    return;
+                }
+                
+                const results = PublicContent.searchResources(query);
+                const container = document.getElementById('resourcesGrid');
+                const noResources = document.getElementById('noResources');
+                
+                if (results.length === 0) {
+                    container.innerHTML = '';
+                    noResources.style.display = 'block';
+                    noResources.querySelector('h3').textContent = 'No Results Found';
+                    noResources.querySelector('p').textContent = 'Try a different search term';
+                    return;
+                }
+                
+                noResources.style.display = 'none';
+                this.renderResources(results);
+            },
+            
+            trackDownload(resourceId) {
+                PublicContent.incrementDownloads(resourceId);
+            }
+        };
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            Resources.init();
+        });
+    </script>
+</body>
+</html>

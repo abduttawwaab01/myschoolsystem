@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My School System - Comprehensive School Management</title>
+    <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #3d7ab5 100%);
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+        .hero-content {
+            text-align: center;
+            color: white;
+            z-index: 1;
+            padding: 20px;
+            max-width: 900px;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+        .hero p {
+            font-size: 1.35rem;
+            opacity: 0.95;
+            margin-bottom: 40px;
+            line-height: 1.7;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .btn-white {
+            background: white;
+            color: #1e3a5f;
+            border: none;
+        }
+        .btn-white:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: white;
+        }
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: 60px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            display: block;
+        }
+        .stat-label {
+            font-size: 0.95rem;
+            opacity: 0.85;
+        }
+        .features {
+            padding: 100px 20px;
+            background: white;
+        }
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 60px;
+        }
+        .section-header h2 {
+            font-size: 2.5rem;
+            color: #1e3a5f;
+            margin-bottom: 16px;
+            font-weight: 800;
+        }
+        .section-header p {
+            font-size: 1.15rem;
+            color: #666;
+            line-height: 1.7;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .feature-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #1e3a5f;
+            box-shadow: 0 20px 40px rgba(30, 58, 95, 0.1);
+        }
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #1e3a5f, #2d5a87);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .feature-card h3 {
+            font-size: 1.25rem;
+            color: #1e3a5f;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+        .feature-card p {
+            color: #666;
+            line-height: 1.7;
+        }
+        .cta {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            padding: 80px 20px;
+            text-align: center;
+            color: white;
+        }
+        .cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            font-weight: 800;
+        }
+        .cta p {
+            font-size: 1.15rem;
+            opacity: 0.9;
+            margin-bottom: 32px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            .hero p {
+                font-size: 1.1rem;
+            }
+            .hero-stats {
+                gap: 30px;
+            }
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="public-header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <span>My School System</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html" class="active">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <span class="hero-badge">
+                <i class="fas fa-star"></i> Trusted by 500+ Schools Worldwide
+            </span>
+            <h1>Modern School Management Made Simple</h1>
+            <p>Comprehensive platform for managing students, staff, finances, and communications. Streamline your educational institution with powerful, easy-to-use tools.</p>
+            <div class="hero-buttons">
+                <a href="pricing.html" class="btn btn-white">
+                    <i class="fas fa-rocket"></i> Get Started Free
+                </a>
+                <a href="blog.html" class="btn btn-outline">
+                    <i class="fas fa-play-circle"></i> Learn More
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number">50K+</span>
+                    <span class="stat-label">Students Managed</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">500+</span>
+                    <span class="stat-label">Schools</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">99.9%</span>
+                    <span class="stat-label">Uptime</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="section-header">
+            <h2>Everything You Need</h2>
+            <p>Powerful features designed to streamline school operations and enhance education quality.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Student Management</h3>
+                <p>Complete student profiles, enrollment tracking, attendance management, and academic records all in one place.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Academic Analytics</h3>
+                <p>Powerful reporting tools to track student performance, identify trends, and make data-driven decisions.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <h3>Financial Management</h3>
+                <p>Fee collection, expense tracking, budget management, and comprehensive financial reporting.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <h3>Staff Management</h3>
+                <p>Teacher profiles, scheduling, performance tracking, and seamless communication tools.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3>Parent Portal</h3>
+                <p>Keep parents informed with real-time updates on attendance, grades, and school announcements.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h3>Mobile Friendly</h3>
+                <p>Access your school data from anywhere on any device. Responsive design for all screen sizes.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <h2>Ready to Transform Your School?</h2>
+        <p>Join hundreds of educational institutions already using My School System to streamline their operations.</p>
+        <div class="hero-buttons">
+            <a href="pricing.html" class="btn btn-white">
+                <i class="fas fa-tags"></i> View Pricing
+            </a>
+            <a href="privacy.html" class="btn btn-outline">
+                <i class="fas fa-shield-alt"></i> Privacy Policy
+            </a>
+        </div>
+    </section>
+
+    <footer class="public-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h4>My School System</h4>
+                    <p>Comprehensive school management solution for modern education.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <a href="blog.html">Blog</a>
+                    <a href="resources.html">Resources</a>
+                    <a href="pricing.html">Pricing</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="terms.html">Terms of Service</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> info@myschool.com</p>
+                    <p><i class="fas fa-phone"></i> +1 234 567 890</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 My School System. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/public.js"></script>
+</body>
+</html>

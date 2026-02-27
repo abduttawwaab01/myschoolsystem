@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal - My School</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .student-welcome {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: var(--radius);
+            margin-bottom: 30px;
+        }
+        .student-welcome h1 {
+            margin: 0 0 10px;
+            font-size: 28px;
+        }
+        .student-welcome p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .test-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .test-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+        .test-card.available {
+            border-left: 4px solid var(--success);
+        }
+        .test-card.completed {
+            border-left: 4px solid var(--gray);
+            opacity: 0.8;
+        }
+        .test-card.pending {
+            border-left: 4px solid var(--warning);
+        }
+        .test-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .test-type-badge.exam { background: #fee2e2; color: #dc2626; }
+        .test-type-badge.midterm { background: #fef3c7; color: #d97706; }
+        .test-type-badge.quiz { background: #dbeafe; color: #2563eb; }
+        .test-type-badge.assignment { background: #d1fae5; color: #059669; }
+        .test-type-badge.daily { background: #f3e8ff; color: #7c3aed; }
+        .test-type-badge.weekly { background: #e0e7ff; color: #4f46e5; }
+        .result-score {
+            font-size: 36px;
+            font-weight: 700;
+        }
+        .result-score.excellent { color: #16a34a; }
+        .result-score.good { color: #2563eb; }
+        .result-score.average { color: #d97706; }
+        .result-score.poor { color: #dc2626; }
+        .exam-timer {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            padding: 15px 25px;
+            border-radius: var(--radius);
+            font-size: 24px;
+            font-weight: 700;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .exam-timer.warning {
+            background: #dc2626;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .question-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .question-nav-btn {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .question-nav-btn:hover { border-color: var(--primary); }
+        .question-nav-btn.current { background: var(--primary); color: white; border-color: var(--primary); }
+        .question-nav-btn.answered { background: #d1fae5; color: #059669; border-color: #059669; }
+        .question-nav-btn.flagged { background: #fef3c7; color: #d97706; border-color: #d97706; }
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            background: white;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+        .option-btn:hover { border-color: var(--primary); }
+        .option-btn.selected { border-color: var(--primary); background: #eff6ff; }
+        .option-btn.correct { border-color: #16a34a; background: #d1fae5; }
+        .option-btn.incorrect { border-color: #dc2626; background: #fee2e2; }
+        .calculator-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            font-size: 24px;
+            z-index: 999;
+        }
+        .calculator-modal {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 15px;
+            z-index: 998;
+            display: none;
+        }
+        .calculator-modal.show { display: block; }
+        .calc-display {
+            width: 100%;
+            padding: 10px;
+            font-size: 20px;
+            text-align: right;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+        .calc-btn {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .calc-btn:hover { background: #f3f4f6; }
+        .calc-btn.operator { background: #eff6ff; color: var(--primary); font-weight: 600; }
+        .calc-btn.clear { background: #fee2e2; color: #dc2626; }
+        .calc-btn.equals { background: var(--primary); color: white; }
+    </style>
+    
+    <script src="../assets/js/firebase-config.js"></script>
+    <script src="../assets/js/storage.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/core.js"></script>
+    <script src="../assets/js/exam.js"></script>
+    <script src="../assets/js/calendar.js"></script>
+    <script src="../assets/js/calculator.js"></script>
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <aside class="sidebar" id="mainSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>My School</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <a href="#" class="nav-item active" data-page="dashboard" onclick="Student.showSection('dashboard'); return false;">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Tests & Exams</div>
+                    <a href="#" class="nav-item" data-page="available" onclick="Student.showSection('availableTests'); return false;">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Available Tests</span>
+                    </a>
+                    <a href="#" class="nav-item" data-page="results" onclick="Student.showSection('myResults'); return false;">
+                        <i class="fas fa-chart-line"></i>
+                        <span>My Results</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Study</div>
+                    <a href="#" class="nav-item" data-page="subjects" onclick="Student.showSection('mySubjects'); return false;">
+                        <i class="fas fa-book"></i>
+                        <span>My Subjects</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">Account</div>
+                    <a href="#" class="nav-item" data-page="profile" onclick="Student.showSection('profile'); return false;">
+                        <i class="fas fa-user"></i>
+                        <span>My Profile</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="../student-login.html" class="nav-item" onclick="StudentAuth.logout(); return false;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            <nav class="top-navbar">
+                <div class="navbar-left">
+                    <button class="menu-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2 style="margin: 0; font-size: 18px;">Student Portal</h2>
+                </div>
+                <div class="navbar-right">
+                    <div class="navbar-profile" onclick="Student.showSection('profile')">
+                        <div class="avatar" id="studentAvatar">ST</div>
+                        <span class="name" id="studentName">Student</span>
+                    </div>
+                </div>
+            </nav>
+            
+            <div class="page-content">
+                <!-- Dashboard Section -->
+                <div id="dashboardSection">
+                    <div class="student-welcome">
+                        <h1 id="welcomeMessage">Welcome, Student!</h1>
+                        <p id="studentClassInfo">Class: - | School: -</p>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon primary"><i class="fas fa-file-alt"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-label">Available Tests</div>
+                                <div class="stat-value" id="availableTestsCount">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon success"><i class="fas fa-check-circle"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-label">Completed</div>
+                                <div class="stat-value" id="completedTestsCount">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon info"><i class="fas fa-star"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-label">Average Score</div>
+                                <div class="stat-value" id="averageScore">0%</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon warning"><i class="fas fa-trophy"></i></div>
+                            <div class="stat-content">
+                                <div class="stat-label">Best Score</div>
+                                <div class="stat-value" id="bestScore">0%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-3 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="calendarWidget" class="calendar-widget"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Calculator Button -->
+                    <button class="floating-calc-btn" onclick="Calculator.toggle()" title="Open Calculator">
+                        <i class="fas fa-calculator"></i>
+                    </button>
+                    
+                    <h3 style="margin: 30px 0 20px;">Available Tests</h3>
+                    <div class="grid-2" id="availableTestsList">
+                        <!-- Tests will be loaded here -->
+                    </div>
+                    
+                    <h3 style="margin: 30px 0 20px;">Recent Results</h3>
+                    <div class="grid-2" id="recentResultsList">
+                        <!-- Results will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Available Tests Section -->
+                <div id="availableTestsSection" style="display: none;">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Available Tests</h1>
+                            <p class="page-subtitle">Tests assigned to your class</p>
+                        </div>
+                    </div>
+                    <div id="allAvailableTests">
+                        <!-- All available tests -->
+                    </div>
+                </div>
+                
+                <!-- My Results Section -->
+                <div id="myResultsSection" style="display: none;">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">My Results</h1>
+                            <p class="page-subtitle">View your test and exam results</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Test History</h3>
+                        </div>
+                        <div class="card-body" id="resultsTable">
+                            <!-- Results table -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- My Subjects Section -->
+                <div id="mySubjectsSection" style="display: none;">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">My Subjects</h1>
+                            <p class="page-subtitle">Subjects for your class</p>
+                        </div>
+                    </div>
+                    <div class="grid-3" id="subjectsList">
+                        <!-- Subjects -->
+                    </div>
+                </div>
+                
+                <!-- Profile Section -->
+                <div id="profileSection" style="display: none;">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">My Profile</h1>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Student Information</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="studentProfileInfo">
+                                    <!-- Profile info -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Change Password</h3>
+                            </div>
+                            <div class="card-body">
+                                <form id="changePasswordForm">
+                                    <div class="form-group">
+                                        <label>Current Password</label>
+                                        <input type="password" id="currentPassword" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>New Password</label>
+                                        <input type="password" id="newPassword" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Confirm New Password</label>
+                                        <input type="password" id="confirmPassword" class="form-control">
+                                    </div>
+                                    <button type="button" class="btn btn-primary" onclick="Student.changePassword()">
+                                        <i class="fas fa-save"></i> Change Password
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Exam Taking Section -->
+                <div id="examSection" style="display: none;">
+                    <div class="exam-header" style="background: white; padding: 20px; border-bottom: 1px solid var(--border); margin: -32px -32px 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h2 id="examTitle" style="margin: 0;">Test Title</h2>
+                                <p id="examInfo" style="margin: 5px 0 0; color: var(--gray);">Subject | Class</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="exam-timer" id="examTimer">
+                                    <i class="fas fa-clock"></i> <span id="timerDisplay">00:00</span>
+                                </div>
+                                <button class="btn btn-primary" id="examCalculatorBtn" onclick="Calculator.toggle()" style="display: none;">
+                                    <i class="fas fa-calculator"></i> Calculator
+                                </button>
+                                <div id="violationWarning" style="display: none; color: var(--danger); font-size: 12px; text-align: center;">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span id="violationCount">0</span>/3 violations
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="question-nav" id="questionNav">
+                        <!-- Question navigation -->
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="questionContainer">
+                                <!-- Question content -->
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+                                <button class="btn btn-outline" id="prevQuestionBtn" onclick="Exam.prevQuestion()">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </button>
+                                <button class="btn btn-warning" onclick="Exam.flagQuestion()">
+                                    <i class="fas fa-flag"></i> Flag
+                                </button>
+                                <button class="btn btn-primary" id="nextQuestionBtn" onclick="Exam.nextQuestion()">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            
+                            <div style="margin-top: 30px; text-align: center;">
+                                <button class="btn btn-success btn-lg" onclick="Exam.submitExam()">
+                                    <i class="fas fa-check"></i> Submit Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Exam Result Section -->
+                <div id="examResultSection" style="display: none;">
+                    <div class="card">
+                        <div class="card-body" style="text-align: center; padding: 40px;">
+                            <div class="result-score" id="resultScore">0%</div>
+                            <p id="resultMessage">Test Completed!</p>
+                            <p id="resultDetails">Score: 0/0</p>
+                            
+                            <div class="stats-grid" style="max-width: 600px; margin: 30px auto;">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="correctCount">0</div>
+                                    <div class="stat-label">Correct</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="wrongCount">0</div>
+                                    <div class="stat-label">Wrong</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="unansweredCount">0</div>
+                                    <div class="stat-label">Unanswered</div>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-primary" onclick="Student.showSection('dashboard')">
+                                <i class="fas fa-home"></i> Back to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const Student = {
+            currentSection: 'dashboard',
+            currentTest: null,
+            
+            init() {
+                if (!StudentAuth.isAuthenticated()) {
+                    window.location.href = '../student-login.html';
+                    return;
+                }
+                
+                const user = StudentAuth.getCurrentUser();
+                const student = StudentAuth.getCurrentStudent();
+                
+                if (!student) {
+                    Toast.error('Student not found');
+                    StudentAuth.logout();
+                    return;
+                }
+                
+                // Update UI with student info
+                document.getElementById('studentName').textContent = student.name;
+                document.getElementById('studentAvatar').textContent = Utils.getInitials(student.name);
+                document.getElementById('welcomeMessage').textContent = 'Welcome, ' + student.name.split(' ')[0] + '!';
+                
+                const school = Storage.getSchoolById(user.schoolId);
+                document.getElementById('studentClassInfo').textContent = 
+                    'Class: ' + student.class + ' | School: ' + (school ? school.name : 'Unknown');
+                
+                this.loadDashboard();
+            },
+            
+            showSection(section) {
+                // Hide all sections
+                const sections = ['dashboard', 'availableTests', 'myResults', 'mySubjects', 'profile', 'exam', 'examResult'];
+                sections.forEach(s => {
+                    document.getElementById(s + 'Section').style.display = 'none';
+                });
+                
+                // Show selected section
+                document.getElementById(section + 'Section').style.display = 'block';
+                
+                // Update nav
+                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                const navItem = document.querySelector(`[data-page="${section}"]`);
+                if (navItem) navItem.classList.add('active');
+                
+                this.currentSection = section;
+                
+                // Load section data
+                switch(section) {
+                    case 'dashboard':
+                        this.loadDashboard();
+                        break;
+                    case 'availableTests':
+                        this.loadAvailableTests();
+                        break;
+                    case 'myResults':
+                        this.loadResults();
+                        break;
+                    case 'mySubjects':
+                        this.loadSubjects();
+                        break;
+                    case 'profile':
+                        this.loadProfile();
+                        break;
+                }
+            },
+            
+            loadDashboard() {
+                const student = StudentAuth.getCurrentStudent();
+                const schoolId = StudentAuth.getCurrentSchoolId();
+                
+                // Get tests for student's class
+                const tests = Storage.getData('tests') || [];
+                const studentClass = student.class;
+                const availableTests = tests.filter(t => 
+                    t.class === studentClass && 
+                    t.status === 'published' &&
+                    t.schoolId === schoolId
+                );
+                
+                // Get completed tests
+                const results = Storage.getData('testResults') || [];
+                const studentResults = results.filter(r => 
+                    r.studentId === student.id && 
+                    r.schoolId === schoolId
+                );
+                
+                const completedIds = studentResults.map(r => r.testId);
+                const notCompleted = availableTests.filter(t => !completedIds.includes(t.id));
+                
+                document.getElementById('availableTestsCount').textContent = notCompleted.length;
+                document.getElementById('completedTestsCount').textContent = studentResults.length;
+                
+                if (studentResults.length > 0) {
+                    const avg = studentResults.reduce((sum, r) => sum + r.percentage, 0) / studentResults.length;
+                    document.getElementById('averageScore').textContent = Math.round(avg) + '%';
+                    
+                    const best = Math.max(...studentResults.map(r => r.percentage));
+                    document.getElementById('bestScore').textContent = Math.round(best) + '%';
+                }
+                
+                // Render available tests
+                this.renderTestCards(notCompleted.slice(0, 4), 'availableTestsList', 'available');
+                
+                // Render recent results
+                this.renderResultCards(studentResults.slice(0, 4), 'recentResultsList');
+            },
+            
+            renderTestCards(tests, containerId, type) {
+                const container = document.getElementById(containerId);
+                if (!tests.length) {
+                    container.innerHTML = '<div class="empty-state"><p>No tests available</p></div>';
+                    return;
+                }
+                
+                let html = '';
+                tests.forEach(test => {
+                    const typeClass = test.testType || 'quiz';
+                    html += `
+                        <div class="test-card ${type}" onclick="Student.startTest('${test.id}')">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <span class="test-type-badge ${typeClass}">${test.testType || 'Quiz'}</span>
+                                <span style="color: var(--gray); font-size: 12px;">
+                                    <i class="fas fa-clock"></i> ${test.duration || 30} min
+                                </span>
+                            </div>
+                            <h3 style="margin: 0 0 10px;">${test.title}</h3>
+                            <p style="color: var(--gray); margin: 0; font-size: 14px;">
+                                <i class="fas fa-book"></i> ${test.subject} | ${test.class}
+                            </p>
+                            <p style="color: var(--gray); margin: 5px 0 0; font-size: 12px;">
+                                ${test.questionIds ? test.questionIds.length : 0} questions
+                            </p>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            },
+            
+            renderResultCards(results, containerId) {
+                const container = document.getElementById(containerId);
+                if (!results.length) {
+                    container.innerHTML = '<div class="empty-state"><p>No results yet</p></div>';
+                    return;
+                }
+                
+                let html = '';
+                results.forEach(result => {
+                    let scoreClass = 'poor';
+                    if (result.percentage >= 90) scoreClass = 'excellent';
+                    else if (result.percentage >= 70) scoreClass = 'good';
+                    else if (result.percentage >= 50) scoreClass = 'average';
+                    
+                    html += `
+                        <div class="test-card completed">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <span class="test-type-badge ${result.testType || 'quiz'}">${result.testType || 'Quiz'}</span>
+                            </div>
+                            <h3 style="margin: 0 0 10px;">${result.testTitle}</h3>
+                            <p style="color: var(--gray); margin: 0; font-size: 14px;">
+                                ${result.subject}
+                            </p>
+                            <div class="result-score ${scoreClass}" style="font-size: 28px; margin-top: 10px;">
+                                ${Math.round(result.percentage)}%
+                            </div>
+                            <p style="color: var(--gray); margin: 5px 0 0; font-size: 12px;">
+                                Score: ${result.obtainedMarks}/${result.totalMarks}
+                            </p>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            },
+            
+            loadAvailableTests() {
+                const student = StudentAuth.getCurrentStudent();
+                const schoolId = StudentAuth.getCurrentSchoolId();
+                
+                if (!student || !student.class) {
+                    console.error('Student or class not found');
+                    return;
+                }
+                
+                const tests = Storage.getData('tests') || [];
+                const results = Storage.getData('testResults') || [];
+                const studentResults = results.filter(r => r.studentId === student.id);
+                const completedIds = studentResults.map(r => r.testId);
+                
+                // Normalize class names for comparison (remove spaces and lowercase)
+                const normalizeClass = (cls) => cls ? cls.toLowerCase().replace(/\s+/g, '').trim() : '';
+                const studentClassNorm = normalizeClass(student.class);
+                
+                const availableTests = tests.filter(t => {
+                    const testClassNorm = normalizeClass(t.class);
+                    
+                    // Match by normalized class (JSS1 = JSS 1)
+                    const isSameClass = studentClassNorm === testClassNorm;
+                    
+                    return isSameClass && 
+                    t.status === 'published' &&
+                    t.schoolId === schoolId &&
+                    !completedIds.includes(t.id);
+                });
+                
+                this.renderTestCards(availableTests, 'allAvailableTests', 'available');
+            },
+            
+            loadResults() {
+                const student = StudentAuth.getCurrentStudent();
+                const schoolId = StudentAuth.getCurrentSchoolId();
+                
+                const results = Storage.getData('testResults') || [];
+                const studentResults = results.filter(r => 
+                    r.studentId === student.id && 
+                    r.schoolId === schoolId
+                ).sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+                
+                if (!studentResults.length) {
+                    document.getElementById('resultsTable').innerHTML = '<div class="empty-state"><p>No test results yet</p></div>';
+                    return;
+                }
+                
+                let html = '<div class="table-container"><table class="table"><thead><tr><th>Test</th><th>Subject</th><th>Type</th><th>Score</th><th>Percentage</th><th>Date</th></tr></thead><tbody>';
+                
+                studentResults.forEach(result => {
+                    html += `
+                        <tr>
+                            <td>${result.testTitle}</td>
+                            <td>${result.subject}</td>
+                            <td><span class="test-type-badge ${result.testType}">${result.testType}</span></td>
+                            <td>${result.obtainedMarks}/${result.totalMarks}</td>
+                            <td>${Math.round(result.percentage)}%</td>
+                            <td>${new Date(result.completedAt).toLocaleDateString()}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table></div>';
+                document.getElementById('resultsTable').innerHTML = html;
+            },
+            
+            loadSubjects() {
+                const student = StudentAuth.getCurrentStudent();
+                const schoolId = StudentAuth.getCurrentSchoolId();
+                const school = Storage.getSchoolById(schoolId);
+                
+                const levelMap = {
+                    'Nursery 1': 'Nursery', 'Nursery 2': 'Nursery',
+                    'Primary 1': 'Primary', 'Primary 2': 'Primary', 'Primary 3': 'Primary',
+                    'Primary 4': 'Primary', 'Primary 5': 'Primary', 'Primary 6': 'Primary',
+                    'JSS 1': 'JSS', 'JSS 2': 'JSS', 'JSS 3': 'JSS',
+                    'SS 1': 'SS', 'SS 2': 'SS', 'SS 3': 'SS'
+                };
+                
+                const level = levelMap[student.class] || 'Primary';
+                const subjects = school?.settings?.subjects?.[level] || [];
+                
+                if (!subjects.length) {
+                    document.getElementById('subjectsList').innerHTML = '<div class="empty-state"><p>No subjects assigned</p></div>';
+                    return;
+                }
+                
+                let html = '';
+                subjects.forEach(subject => {
+                    html += `
+                        <div class="card">
+                            <div class="card-body" style="text-align: center;">
+                                <div class="avatar avatar-lg" style="margin: 0 auto 15px; background: var(--primary);">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <h3>${subject}</h3>
+                                <p class="text-muted">${level} Level</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('subjectsList').innerHTML = html;
+            },
+            
+            loadProfile() {
+                const student = StudentAuth.getCurrentStudent();
+                const school = Storage.getSchoolById(StudentAuth.getCurrentSchoolId());
+                
+                const html = `
+                    <div class="list-group">
+                        <div class="list-group-item">
+                            <span class="text-muted">Student ID</span>
+                            <span>${student.id}</span>
+                        </div>
+                        <div class="list-group-item">
+                            <span class="text-muted">Full Name</span>
+                            <span>${student.name}</span>
+                        </div>
+                        <div class="list-group-item">
+                            <span class="text-muted">Class</span>
+                            <span>${student.class}</span>
+                        </div>
+                        <div class="list-group-item">
+                            <span class="text-muted">Email</span>
+                            <span>${student.email || 'Not set'}</span>
+                        </div>
+                        <div class="list-group-item">
+                            <span class="text-muted">Phone</span>
+                            <span>${student.phone || 'Not set'}</span>
+                        </div>
+                        <div class="list-group-item">
+                            <span class="text-muted">School</span>
+                            <span>${school?.name || 'Unknown'}</span>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('studentProfileInfo').innerHTML = html;
+            },
+            
+            startTest(testId) {
+                const tests = Storage.getData('tests') || [];
+                const test = tests.find(t => t.id === testId);
+                
+                if (!test) {
+                    Toast.error('Test not found');
+                    return;
+                }
+                
+                // Get questions
+                const questions = Storage.getData('questions') || [];
+                const testQuestions = questions.filter(q => test.questionIds.includes(q.id));
+                
+                if (!testQuestions.length) {
+                    Toast.error('No questions found for this test');
+                    return;
+                }
+                
+                // Check if student already completed this test
+                const existingResults = Storage.getData('testResults') || [];
+                const alreadyCompleted = existingResults.some(r => 
+                    r.testId === test.id && 
+                    r.studentId === StudentAuth.getCurrentUser().id
+                );
+                
+                if (alreadyCompleted) {
+                    Toast.error('You have already completed this test!');
+                    this.loadAvailableTests();
+                    return;
+                }
+                
+                // Initialize exam
+                Exam.init(test, testQuestions);
+                this.currentTest = test;
+                
+                // Check for saved answers and restore (only if test not already completed)
+                const savedSession = Exam.loadSavedAnswers();
+                if (savedSession && savedSession.answers && Object.keys(savedSession.answers).length > 0) {
+                    const restore = confirm('You have a saved exam session. Would you like to resume?');
+                    if (restore) {
+                        Exam.answers = savedSession.answers || {};
+                        Exam.flaggedQuestions = savedSession.flaggedQuestions || [];
+                        Exam.currentQuestionIndex = savedSession.currentQuestionIndex || 0;
+                        Exam.renderQuestionNav();
+                        Exam.renderQuestion();
+                    }
+                }
+                
+                // Show exam section
+                this.showSection('exam');
+            },
+            
+            changePassword() {
+                const current = document.getElementById('currentPassword').value;
+                const newPass = document.getElementById('newPassword').value;
+                const confirm = document.getElementById('confirmPassword').value;
+                
+                if (!current || !newPass || !confirm) {
+                    Toast.error('Please fill all fields');
+                    return;
+                }
+                
+                if (newPass !== confirm) {
+                    Toast.error('Passwords do not match');
+                    return;
+                }
+                
+                const student = StudentAuth.getCurrentStudent();
+                const storedPassword = student.password || student.id;
+                
+                if (storedPassword !== current && Storage.hashPassword(current) !== storedPassword) {
+                    Toast.error('Current password is incorrect');
+                    return;
+                }
+                
+                Storage.updateItem('students', student.id, { password: newPass });
+                Toast.success('Password changed successfully');
+                document.getElementById('changePasswordForm').reset();
+            }
+        };
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            Student.init();
+            Calendar.init();
+            Calculator.init();
+        });
+    </script>
+</body>
+</html>

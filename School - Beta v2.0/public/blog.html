@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - My School System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/public.css">
+    <style>
+        :root {
+            --primary: #16a34a;
+            --primary-dark: #15803d;
+            --primary-light: #22c55e;
+            --secondary: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="public-header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <span>My School System</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="pricing.html">Pricing</a></li>
+                    <li><a href="resources.html">Resources</a></li>
+                    <li><a href="blog.html" class="active">Blog</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="blog-hero">
+        <div class="container">
+            <h1>Our Blog</h1>
+            <p>Stay updated with the latest news, tips, and insights from My School System</p>
+        </div>
+    </section>
+
+    <!-- Search & Filter -->
+    <section class="container" style="padding-top: 2rem;">
+        <div class="search-box">
+            <input type="text" class="search-input" id="blogSearchInput" placeholder="Search articles..." onkeyup="Blog.searchPosts()">
+            <button class="search-button"><i class="fas fa-search"></i></button>
+        </div>
+        <div class="categories-list" id="categoriesList">
+            <a href="#" class="category-tag active" data-category="" onclick="Blog.filterByCategory('')">All</a>
+        </div>
+    </section>
+
+    <!-- Featured Post -->
+    <section class="container" id="featuredPost"></section>
+
+    <!-- Blog Grid -->
+    <section class="container">
+        <h2 style="margin: 2rem 0 1.5rem;">Latest Articles</h2>
+        <div class="blog-grid" id="blogGrid">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
+    </section>
+
+    <!-- No Posts Message -->
+    <section class="container" id="noPosts" style="display:none;">
+        <div class="empty-state">
+            <i class="fas fa-blog"></i>
+            <h3>No Posts Yet</h3>
+            <p>Check back soon for new articles!</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="public-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div class="footer-brand">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>My School System</span>
+                    </div>
+                    <p class="footer-description">A comprehensive school management solution for modern educational institutions.</p>
+                </div>
+                <div>
+                    <h4 class="footer-title">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
+                        <li><a href="resources.html">Resources</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="terms.html">Terms & Conditions</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">Contact</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">support@myschoolsystem.com</a></li>
+                        <li><a href="#">+234 800 123 4567</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 My School System. All rights reserved. | My School System - Odebunmi Tawwab</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/public.js"></script>
+    <script>
+        const Blog = {
+            currentCategory: '',
+            
+            init() {
+                this.loadCategories();
+                this.loadFeaturedPost();
+                this.loadPosts();
+            },
+            
+            loadCategories() {
+                const categories = PublicContent.getCategories();
+                const container = document.getElementById('categoriesList');
+                let html = '<a href="#" class="category-tag active" data-category="" onclick="Blog.filterByCategory(\'\')">All</a>';
+                
+                categories.forEach(cat => {
+                    html += `<a href="#" class="category-tag" data-category="${cat}" onclick="Blog.filterByCategory('${cat}')">${cat}</a>`;
+                });
+                container.innerHTML = html;
+            },
+            
+            loadFeaturedPost() {
+                const featured = PublicContent.getFeaturedPost();
+                const container = document.getElementById('featuredPost');
+                
+                if (!featured) {
+                    container.style.display = 'none';
+                    return;
+                }
+                
+                const imageUrl = featured.featuredImage || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800';
+                
+                container.innerHTML = `
+                    <div class="card" style="margin: 2rem 0; overflow: hidden;">
+                        <div style="display: flex; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 300px;">
+                                <img src="${imageUrl}" alt="${featured.title}" style="width: 100%; height: 100%; object-fit: cover; min-height: 300px;">
+                            </div>
+                            <div style="flex: 1; padding: 2rem; min-width: 300px;">
+                                <span class="blog-card-category">Featured</span>
+                                <h2 style="margin: 1rem 0;"><a href="post.html?id=${featured.id}" style="color: var(--dark);">${featured.title}</a></h2>
+                                <p style="color: var(--gray-500); margin-bottom: 1rem;">${featured.excerpt || PublicContent.generateExcerpt(featured.content)}</p>
+                                <div class="card-meta">
+                                    <span><i class="fas fa-calendar"></i> ${PublicContent.formatDate(featured.createdAt)}</span>
+                                    <span><i class="fas fa-eye"></i> ${featured.views || 0} views</span>
+                                    ${featured.commentsEnabled ? `<span><i class="fas fa-comments"></i> ${PublicContent.getComments(featured.id).length}</span>` : ''}
+                                </div>
+                                <a href="post.html?id=${featured.id}" class="btn btn-primary" style="margin-top: 1rem;">Read More <i class="fas fa-arrow-right"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            loadPosts() {
+                const posts = PublicContent.getPublishedPosts();
+                const container = document.getElementById('blogGrid');
+                const noPosts = document.getElementById('noPosts');
+                
+                if (posts.length === 0) {
+                    container.innerHTML = '';
+                    noPosts.style.display = 'block';
+                    return;
+                }
+                
+                noPosts.style.display = 'none';
+                
+                let html = '';
+                posts.forEach(post => {
+                    const imageUrl = post.featuredImage || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400';
+                    
+                    html += `
+                        <div class="blog-card">
+                            <img src="${imageUrl}" alt="${post.title}" class="blog-card-image" onclick="window.location.href='post.html?id=${post.id}'" style="cursor:pointer;">
+                            <div class="blog-card-body">
+                                <span class="blog-card-category">${post.category}</span>
+                                <h3 class="blog-card-title"><a href="post.html?id=${post.id}">${post.title}</a></h3>
+                                <p class="blog-card-excerpt">${post.excerpt || PublicContent.generateExcerpt(post.content)}</p>
+                                <div class="blog-card-footer">
+                                    <span><i class="fas fa-calendar"></i> ${PublicContent.formatDate(post.createdAt)}</span>
+                                    <span><i class="fas fa-eye"></i> ${post.views || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
+            
+            filterByCategory(category) {
+                this.currentCategory = category;
+                
+                document.querySelectorAll('.category-tag').forEach(tag => {
+                    tag.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                const posts = category ? PublicContent.getPublishedPosts().filter(p => p.category === category) : PublicContent.getPublishedPosts();
+                const container = document.getElementById('blogGrid');
+                const noPosts = document.getElementById('noPosts');
+                
+                if (posts.length === 0) {
+                    container.innerHTML = '';
+                    noPosts.style.display = 'block';
+                    return;
+                }
+                
+                noPosts.style.display = 'none';
+                
+                let html = '';
+                posts.forEach(post => {
+                    const imageUrl = post.featuredImage || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400';
+                    
+                    html += `
+                        <div class="blog-card">
+                            <img src="${imageUrl}" alt="${post.title}" class="blog-card-image" onclick="window.location.href='post.html?id=${post.id}'" style="cursor:pointer;">
+                            <div class="blog-card-body">
+                                <span class="blog-card-category">${post.category}</span>
+                                <h3 class="blog-card-title"><a href="post.html?id=${post.id}">${post.title}</a></h3>
+                                <p class="blog-card-excerpt">${post.excerpt || PublicContent.generateExcerpt(post.content)}</p>
+                                <div class="blog-card-footer">
+                                    <span><i class="fas fa-calendar"></i> ${PublicContent.formatDate(post.createdAt)}</span>
+                                    <span><i class="fas fa-eye"></i> ${post.views || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
+            
+            searchPosts() {
+                const query = document.getElementById('blogSearchInput').value;
+                
+                if (!query) {
+                    this.filterByCategory(this.currentCategory);
+                    return;
+                }
+                
+                const results = PublicContent.searchPosts(query);
+                const container = document.getElementById('blogGrid');
+                const noPosts = document.getElementById('noPosts');
+                
+                if (results.length === 0) {
+                    container.innerHTML = '';
+                    noPosts.style.display = 'block';
+                    noPosts.querySelector('h3').textContent = 'No Results Found';
+                    noPosts.querySelector('p').textContent = 'Try a different search term';
+                    return;
+                }
+                
+                noPosts.style.display = 'none';
+                
+                let html = '';
+                results.forEach(post => {
+                    const imageUrl = post.featuredImage || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400';
+                    
+                    html += `
+                        <div class="blog-card">
+                            <img src="${imageUrl}" alt="${post.title}" class="blog-card-image" onclick="window.location.href='post.html?id=${post.id}'" style="cursor:pointer;">
+                            <div class="blog-card-body">
+                                <span class="blog-card-category">${post.category}</span>
+                                <h3 class="blog-card-title"><a href="post.html?id=${post.id}">${post.title}</a></h3>
+                                <p class="blog-card-excerpt">${post.excerpt || PublicContent.generateExcerpt(post.content)}</p>
+                                <div class="blog-card-footer">
+                                    <span><i class="fas fa-calendar"></i> ${PublicContent.formatDate(post.createdAt)}</span>
+                                    <span><i class="fas fa-eye"></i> ${post.views || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            }
+        };
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            Blog.init();
+        });
+    </script>
+</body>
+</html>

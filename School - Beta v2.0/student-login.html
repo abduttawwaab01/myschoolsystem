@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login - My School</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./assets/css/style.css">
+    
+    <script src="./assets/js/firebase-config.js"></script>
+    <script src="./assets/js/storage.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/core.js"></script>
+    <script>
+        (function() {
+            document.querySelectorAll('.toggle-password').forEach(function(btn) {
+                btn.onclick = function() {
+                    var input = this.closest('.password-input').querySelector('input');
+                    var icon = this.querySelector('i');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                };
+            });
+        })();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Auth !== 'undefined' && StudentAuth.isAuthenticated()) {
+                const user = StudentAuth.getCurrentUser();
+                if (user && user.role === 'student') {
+                    window.location.href = './pages/student.html';
+                }
+            }
+            
+            if (typeof Storage === 'undefined' || typeof Storage.getSchools !== 'function') {
+                setTimeout(function() {
+                    window.location.reload();
+                }, 100);
+                return;
+            }
+            
+            const schools = Storage.getSchools() || [];
+            const schoolSelect = document.getElementById('schoolSelect');
+            
+            if (schools.length > 0) {
+                schools.forEach(function(school) {
+                    schoolSelect.innerHTML += '<option value="' + school.id + '">' + school.name + '</option>';
+                });
+            }
+            
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const studentId = document.getElementById('studentId').value.trim();
+                const password = document.getElementById('loginPassword').value;
+                const schoolId = document.getElementById('schoolSelect').value;
+                
+                if (!studentId) {
+                    Toast.error('Please enter your Student ID');
+                    return;
+                }
+                
+                if (!schoolId) {
+                    Toast.error('Please select your school');
+                    return;
+                }
+                
+                Loading.show();
+                
+                // Authenticate student
+                const result = StudentAuth.login(studentId, password, schoolId);
+                
+                Loading.hide();
+                
+                if (result.success) {
+                    Toast.success('Login successful!');
+                    setTimeout(function() {
+                        window.location.href = './pages/student.html';
+                    }, 500);
+                } else {
+                    Toast.error(result.message || 'Invalid Student ID or Password');
+                }
+            });
+        });
+    </script>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Student Portal</span>
+                </div>
+                <h1>Student Login</h1>
+                <p>Access your tests, assignments and results</p>
+            </div>
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="schoolSelect">
+                        <i class="fas fa-school"></i> Select School
+                    </label>
+                    <select id="schoolSelect" name="schoolId" required>
+                        <option value="">Select your school</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="studentId">
+                        <i class="fas fa-id-card"></i> Student ID / Username
+                    </label>
+                    <input type="text" id="studentId" name="studentId" required 
+                           placeholder="Enter Student ID or Username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <div class="password-input">
+                        <input type="password" id="loginPassword" name="password" required 
+                               placeholder="Enter your password">
+                        <button type="button" class="toggle-password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group remember-me">
+                    <label>
+                        <input type="checkbox" id="rememberMe">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password" onclick="StudentAuth.showForgotPassword()">Forgot Password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+            <div class="auth-footer">
+                <p>Back to <a href="./login.html">Staff Login</a> | <a href="./parent-login.html">Parent Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal-overlay">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Reset Password</h3>
+                <button class="modal-close" onclick="Modal.hide('forgotPasswordModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">Enter your Student ID and new password to reset.</p>
+                <div class="form-group">
+                    <label>Student ID</label>
+                    <input type="text" id="resetStudentId" class="form-control" placeholder="Enter Student ID">
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="resetNewPassword" class="form-control" placeholder="Enter new password">
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="resetConfirmPassword" class="form-control" placeholder="Confirm new password">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="Modal.hide('forgotPasswordModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="StudentAuth.resetPassword()">Reset Password</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+</body>
+</html>

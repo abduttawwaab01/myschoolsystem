@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - My School</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./assets/css/style.css">
+    
+    <!-- Local Storage Only -->
+    <script src="./assets/js/firebase-config.js"></script>
+    <script src="./assets/js/storage.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/core.js"></script>
+    <script>
+        // Run password toggle immediately when script loads
+        (function() {
+            document.querySelectorAll('.toggle-password').forEach(function(btn) {
+                btn.onclick = function() {
+                    var input = this.closest('.password-input').querySelector('input');
+                    var icon = this.querySelector('i');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                };
+            });
+        })();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Auth !== 'undefined' && Auth.isAuthenticated()) {
+                const user = Auth.getCurrentUser();
+                redirectToDashboard(user.role);
+            }
+            
+            // Wait for Storage to be ready
+            if (typeof Storage === 'undefined' || typeof Storage.getSchools !== 'function') {
+                console.error('Storage not ready, reloading...');
+                setTimeout(function() {
+                    window.location.reload();
+                }, 100);
+                return;
+            }
+            
+            const schools = Storage.getSchools() || [];
+            const schoolSelect = document.getElementById('schoolSelect');
+            
+            // Always show school select with options if schools exist
+            if (schools.length > 0) {
+                schools.forEach(school => {
+                    schoolSelect.innerHTML += `<option value="${school.id}">${school.name}</option>`;
+                });
+            }
+            // School select remains visible even without registered schools
+            
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                const schoolId = document.getElementById('schoolSelect').value;
+                
+                Loading.show();
+                
+                const result = Auth.login({ email, password, schoolId });
+                
+                Loading.hide();
+                
+                if (result.expired) {
+                    Toast.error(result.message);
+                    return;
+                }
+                
+                if (result.warning) {
+                    Toast.warning(result.message);
+                    setTimeout(() => {
+                        redirectToDashboardBySchool(result.schoolId);
+                    }, 2000);
+                    return;
+                }
+                
+                if (result.success) {
+                    Toast.success('Login successful!');
+                    
+                    // Smart auto-sync: load latest data from cloud on login
+                    if (window.smartSyncOnLogin) {
+                        window.smartSyncOnLogin();
+                    }
+                    
+                    setTimeout(() => {
+                        redirectToDashboard(result.user.role);
+                    }, 500);
+                } else {
+                    Toast.error(result.message);
+                }
+            });
+            
+            function redirectToDashboard(role) {
+                const paths = {
+                    super_admin: 'pages/superadmin.html',
+                    school_admin: 'pages/admin.html',
+                    teacher: 'pages/teacher.html',
+                    accountant: 'pages/accountant.html',
+                    director: 'pages/director.html',
+                    parent: 'parent.html'
+                };
+                window.location.href = paths[role] || 'pages/admin.html';
+            }
+            
+            function redirectToDashboardBySchool(schoolId) {
+                const users = Storage.getUsers(schoolId);
+                const admin = users.find(u => u.role === 'school_admin');
+                if (admin) {
+                    window.location.href = 'pages/admin.html';
+                } else {
+                    window.location.href = 'pages/teacher.html';
+                }
+            }
+        });
+    </script>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>My School</span>
+                </div>
+                <h1>Welcome Back</h1>
+                <p>Sign in to your account</p>
+            </div>
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="loginEmail">
+                        <i class="fas fa-envelope"></i> Email or Username
+                    </label>
+                    <input type="text" id="loginEmail" name="email" required 
+                           placeholder="Enter email or username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <div class="password-input">
+                        <input type="password" id="loginPassword" name="password" required 
+                               placeholder="Enter password">
+                        <button type="button" class="toggle-password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group school-select-group" id="schoolSelectGroup">
+                    <label for="schoolSelect">
+                        <i class="fas fa-school"></i> Select School
+                    </label>
+                    <select id="schoolSelect" name="schoolId">
+                        <option value="">Select your school</option>
+                    </select>
+                </div>
+                <div class="form-group remember-me">
+                    <label>
+                        <input type="checkbox" id="rememberMe">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="./register-school.html">Register School</a></p>
+            </div>
+            
+            <!-- Portal Links -->
+            <div class="portal-links">
+                <div class="portal-link-card" onclick="location.href='./student-login.html'">
+                    <div class="portal-icon student">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="portal-info">
+                        <h4>Student Portal</h4>
+                        <p>Take tests & view results</p>
+                    </div>
+                    <i class="fas fa-chevron-right portal-arrow"></i>
+                </div>
+                <div class="portal-link-card" onclick="location.href='./parent-login.html'">
+                    <div class="portal-icon parent">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <div class="portal-info">
+                        <h4>Parent Portal</h4>
+                        <p>View child's progress</p>
+                    </div>
+                    <i class="fas fa-chevron-right portal-arrow"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+</body>
+</html>
